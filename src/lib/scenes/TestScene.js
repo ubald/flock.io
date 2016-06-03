@@ -1,6 +1,7 @@
 "use strict";
 
 import Scene from "../engine/Scene";
+import THREE from "three";
 
 /*
 import Body from "cannon/objects/Body"
@@ -48,10 +49,20 @@ export default class TestScene extends Scene {
             lastTime = time;
         })();*/
     }
-    
-    update() {
-        super.update();
+
+    _initVisual() {
+        super._initVisual();
         
-        
+        this.geometry = new THREE.SphereGeometry( 400, 16, 16, 0, Math.PI*2, 0, Math.PI/2 /* TODO: DOME ANGLE */);
+        this.material = new THREE.MeshBasicMaterial( { color: 0xff0000, wireframe: true } );
+
+        this.mesh = new THREE.Mesh( this.geometry, this.material );
+        this.scene.add( this.mesh );
+    }
+
+    _updateVisual() {
+        super._updateVisual();
+
+        this.mesh.rotation.y += 0.01;
     }
 }

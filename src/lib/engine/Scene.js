@@ -1,6 +1,7 @@
 "use strict";
 
 import Id from "./Id";
+import THREE from "three";
 
 export default class Scene extends Id {
     constructor( name ) {
@@ -9,7 +10,26 @@ export default class Scene extends Id {
         this.entities = [];
     }
 
+    get world() {
+        return this._world;
+    }
+
+    set world(world) {
+        this._world = world;
+    }
+
+    get scene() {
+        return this._scene;
+    }
+
     init() {
+        if ( CLIENT ) {
+            this._scene = new THREE.Scene();
+            this._initVisual();
+        }
+    }
+
+    _initVisual() {
 
     }
 
@@ -45,6 +65,14 @@ export default class Scene extends Id {
     }
     
     update() {
-        entities.forEach( entity => entity.update() );
+        this.entities.forEach( entity => entity.update() );
+
+        if ( CLIENT ) {
+            this._updateVisual();
+        }
+    }
+    
+    _updateVisual() {
+        
     }
 }

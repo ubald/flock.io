@@ -29,7 +29,8 @@ gulp.task( 'frontend-build', function ( done ) {
             "process.env": {
                 "NODE_ENV": JSON.stringify( "production" )
             }
-        } )
+        } ),
+        new webpack.optimize.UglifyJsPlugin()
     );
     webpack( clientConfig ).run( onBuild( done ) );
 } );
@@ -69,7 +70,8 @@ gulp.task( 'backend-build', function ( done ) {
             "process.env": {
                 "NODE_ENV": JSON.stringify( "production" )
             }
-        } )
+        } ),
+        new webpack.optimize.UglifyJsPlugin()
     );
     webpack( serverConfig ).run( onBuild( done ) );
 } );

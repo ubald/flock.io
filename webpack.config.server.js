@@ -24,20 +24,24 @@ module.exports = {
         path:     path.join( __dirname, 'build' ),
         filename: 'server.js'
     },
-    node : {
+    node:        {
         __filename: true,
-        __dirname: true
+        __dirname:  true
     },
     externals:   nodeModules,
     recordsPath: path.join( __dirname, 'build/_records' ),
-    resolve: {
+    resolve:     {
         alias: {
-            "cannon": "cannon/src"
+            //"cannon": "cannon/src"
         }
     },
     plugins:     [
         new webpack.NoErrorsPlugin(),
-        new webpack.BannerPlugin( 'require("source-map-support").install();', { raw: true, entryOnly: false } )
+        new webpack.BannerPlugin( 'require("source-map-support").install();', { raw: true, entryOnly: false } ),
+        new webpack.DefinePlugin( {
+            CLIENT: false,
+            SERVER: true
+        } )
     ],
     module:      {
         loaders: [

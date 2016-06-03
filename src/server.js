@@ -1,8 +1,10 @@
 'use strict';
 
-import express from 'express';
-import preprocess from 'preprocess';
-import path from 'path';
+import express from "express";
+import preprocess from "preprocess";
+import path from "path";
+import World from "./lib/engine/World";
+import TestScene from "./lib/scenes/TestScene";
 
 const app = express();
 
@@ -26,8 +28,5 @@ app.listen( 3000, function () {
 } );
 
 
-import World from "./lib/engine/World";
-import TestScene from "./lib/scenes/TestScene";
-
-const world = new World();
+const world = new World( 'flock.io' );
 world.scene = new TestScene();

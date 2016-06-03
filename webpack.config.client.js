@@ -14,11 +14,15 @@ module.exports = {
     },
     resolve: {
         alias: {
-            "cannon": "cannon/src"
+            //"cannon": "cannon/src"
         }
     },
     plugins: [
-        new webpack.NoErrorsPlugin()
+        new webpack.NoErrorsPlugin(),
+        new webpack.DefinePlugin( {
+            CLIENT: true,
+            SERVER: false
+        } )
     ],
     module:  {
         loaders: [

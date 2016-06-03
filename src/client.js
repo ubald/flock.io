@@ -1,59 +1,63 @@
 "use strict";
 
 import "./client.less";
-
 import World from "./lib/engine/World";
 import TestScene from "./lib/scenes/TestScene";
 
-const world = new World();
+const world = new World( 'flock.io' );
+document.body.appendChild( world.renderer.domElement );
+function onWindowResize() {
+    world.camera.aspect = window.innerWidth / window.innerHeight;
+    world.camera.updateProjectionMatrix();
+    world.renderer.setSize( window.innerWidth, window.innerHeight );
+}
+window.addEventListener( 'resize', onWindowResize, false );
+onWindowResize();
+
 world.scene = new TestScene();
 
-import THREE from "three";
 
-var scene, camera, renderer;
-var geometry, material, mesh;
+/*
 
-init();
-animate();
+ import THREE from "three";
 
-function init() {
+ var scene, camera, renderer;
+ var geometry, material, mesh;
 
-    scene = new THREE.Scene();
+ init();
+ animate();
 
-    camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
-    camera.position.z = 1000;
+ function init() {
 
-    geometry = new THREE.BoxGeometry( 200, 200, 200 );
-    material = new THREE.MeshBasicMaterial( { color: 0xff0000, wireframe: true } );
+ scene = new THREE.Scene();
 
-    mesh = new THREE.Mesh( geometry, material );
-    scene.add( mesh );
+ //camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
+ //camera.position.z = 1000;
 
-    renderer = new THREE.WebGLRenderer();
-    renderer.setSize( window.innerWidth, window.innerHeight );
+ geometry = new THREE.BoxGeometry( 200, 200, 200 );
+ material = new THREE.MeshBasicMaterial( { color: 0xff0000, wireframe: true } );
 
-    document.body.appendChild( renderer.domElement );
+ mesh = new THREE.Mesh( geometry, material );
+ scene.add( mesh );
 
-}
+ //renderer = new THREE.WebGLRenderer();
+ //renderer.setSize( window.innerWidth, window.innerHeight );
 
-function animate() {
+ //document.body.appendChild( renderer.domElement );
 
-    requestAnimationFrame( animate );
+ }
 
-    mesh.rotation.x += 0.01;
-    mesh.rotation.y += 0.02;
+ function animate() {
 
-    renderer.render( scene, camera );
-}
+ requestAnimationFrame( animate );
 
-window.addEventListener( 'resize', onWindowResize, false );
+ mesh.rotation.x += 0.01;
+ mesh.rotation.y += 0.02;
 
-function onWindowResize(){
+ renderer.render( scene, camera );
+ }
 
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
+ */
 
-    renderer.setSize( window.innerWidth, window.innerHeight );
 
-}
 
