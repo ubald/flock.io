@@ -2,6 +2,9 @@ var webpack = require( 'webpack' );
 var path    = require( 'path' );
 var fs      = require( 'fs' );
 
+var isDev = process.env.NODE_ENV !== 'production';
+var rootPath = path.dirname( __dirname );
+
 /**
  * Ignored node_modules
  */
@@ -17,11 +20,11 @@ fs.readdirSync( 'node_modules' )
 module.exports = {
     devtool:     'source-map',
     entry:       [
-        './src/server.js'
+        path.join( rootPath, 'src/server.js' )
     ],
     target:      'node',
     output:      {
-        path:     path.join( __dirname, 'build' ),
+        path:     path.join( rootPath, 'build' ),
         filename: 'server.js'
     },
     node:        {
@@ -31,20 +34,30 @@ module.exports = {
     externals:   nodeModules,
     recordsPath: path.join( __dirname, 'build/_records' ),
     resolve:     {
+        modulesDirectories: [
+            'src/server',
+            'src/lib',
+            'node_modules'
+        ],
         alias: {
             //"cannon": "cannon/src"
         }
     },
     plugins:     [
+        new webpack.optimize.OccurrenceOrderPlugin(),
         new webpack.NoErrorsPlugin(),
         new webpack.BannerPlugin( 'require("source-map-support").install();', { raw: true, entryOnly: false } ),
         new webpack.DefinePlugin( {
-            CLIENT: false,
-            SERVER: true
+            __CLIENT__:    false,
+            __SERVER__:    true,
+            "process.env": {
+                "NODE_ENV": JSON.stringify( isDev ? "development" : "production" )
+            }
         } )
     ],
     module:      {
         loaders: [
+            // Loaders
             { test: /\.html/, loader: 'html' },
             {
                 test:    /\.jsx?$/,

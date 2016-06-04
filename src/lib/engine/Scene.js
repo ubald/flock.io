@@ -1,40 +1,91 @@
 "use strict";
 
 import Id from "./Id";
-import THREE from "three";
+import CANNON from "cannon";
 
+if (__CLIENT__) {
+    var THREE = require( "three" );
+}
+
+/**
+ * Scene
+ */
 export default class Scene extends Id {
+
+    /**
+     * Create a scene
+     * @param {String} name
+     */
     constructor( name ) {
         super( name );
 
-        this.entities = [];
+        // Entities
+        this._entities = [];
+        
+        // Physics
+        this.maxSubSteps = 3;
     }
 
+    /**
+     * World
+     * @returns {World}
+     */
     get world() {
         return this._world;
     }
 
-    set world(world) {
-        this._world = world;
+    /**
+     * Physics
+     * @returns {CANNON.World}
+     */
+    get physics() {
+        return this._physics;
     }
 
+    /**
+     * Scene
+     * @returns {THREE.Scene}
+     */
     get scene() {
         return this._scene;
     }
 
-    init() {
-        if ( CLIENT ) {
+    /**
+     * Entities
+     * @returns {Array<Entity>}
+     */
+    get entities() {
+        return this._entities;
+    }
+
+    /**
+     * Initialize the scene
+     * @param {World} world
+     */
+    init(world) {
+        // World
+        this._world = world;
+        this.fixedTimeStep = 1.0 / this._world.fps; // seconds
+
+        // Physics
+        this._physics = new CANNON.World();
+        this._physics.gravity.set( 0, 0, -9.82 ); // m/s²
+        
+        // Visual
+        if ( __CLIENT__ ) {
             this._scene = new THREE.Scene();
-            this._initVisual();
         }
     }
 
-    _initVisual() {
-
-    }
-
+    /**
+     * Destroy the scene
+     */
     destroy() {
-
+        if ( __CLIENT__ ) {
+            this._scene = null;
+        }
+        this._entities.forEach( entity => entity.destroy() );
+        this._physics = null;
     }
 
     /**
@@ -46,7 +97,7 @@ export default class Scene extends Id {
             throw new Error( "You can't add a null entity" );
         }
         entity.scene = this;
-        this.entities.push( entity );
+        this._entities.push( entity );
     }
 
     /**
@@ -61,18 +112,19 @@ export default class Scene extends Id {
             throw new Error( `You can't remove entity ${entity.name} from ${this.name} as this scene does not own the entity` );
         }
         entity.scene = null;
-        this.entities.splice( this.entities.indexOf( entity ), 1 );
+        this._entities.splice( this._entities.indexOf( entity ), 1 );
     }
-    
-    update() {
-        this.entities.forEach( entity => entity.update() );
 
-        if ( CLIENT ) {
-            this._updateVisual();
-        }
-    }
-    
-    _updateVisual() {
-        
+    /**
+     * Update the scene
+     * @param {number} dt - Time delta since last update
+     */
+    update(dt) {
+
+        // Entities update
+        this._entities.forEach( entity => entity.update(dt) );
+
+        // Physics Update
+        this._physics.step( this.fixedTimeStep, dt, this.maxSubSteps );
     }
 }

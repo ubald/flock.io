@@ -6,9 +6,6 @@ var fs               = require( 'fs' );
 var nodemon          = require( 'nodemon' );
 var WebpackDevServer = require( 'webpack-dev-server' );
 
-var clientConfig = require( './webpack.config.client' );
-var serverConfig = require( './webpack.config.server' );
-
 function onBuild( done ) {
     return function ( err, stats ) {
         if ( err ) {
@@ -24,35 +21,19 @@ function onBuild( done ) {
 }
 
 gulp.task( 'frontend-build', function ( done ) {
-    clientConfig.plugins = clientConfig.plugins.concat(
-        new webpack.DefinePlugin( {
-            "process.env": {
-                "NODE_ENV": JSON.stringify( "production" )
-            }
-        } ),
-        new webpack.optimize.UglifyJsPlugin()
-    );
-    webpack( clientConfig ).run( onBuild( done ) );
+    webpack( require( './webpack/webpack.config.client.production' ) ).run( onBuild( done ) );
 } );
 
 gulp.task( 'frontend-watch', function () {
     //webpack(frontendConfig).watch(100, onBuild());
-    clientConfig.debug = true;
-    clientConfig.entry.unshift("webpack-dev-server/client?http://localhost:3001/", "webpack/hot/dev-server");
-    clientConfig.output.publicPath = "http://localhost:3001" + clientConfig.output.publicPath;
-    clientConfig.plugins           = clientConfig.plugins.concat(
-        new webpack.HotModuleReplacementPlugin(),
-        new webpack.DefinePlugin( {
-            "process.env": {
-                "NODE_ENV": JSON.stringify( "development" )
-            }
-        } )
-    );
+    var config = require( './webpack/webpack.config.client.dev' );
 
-    new WebpackDevServer( webpack( clientConfig ), {
-        publicPath: clientConfig.output.publicPath,
-        hot:        true,
-        stats:      {
+    new WebpackDevServer( webpack( config ), {
+        contentBase: './build',
+        publicPath:  config.output.publicPath,
+        hot:         true,
+        progress: true,
+        stats:       {
             colors: true
         }
     } ).listen( 3001, 'localhost', function ( err, result ) {
@@ -65,35 +46,21 @@ gulp.task( 'frontend-watch', function () {
 } );
 
 gulp.task( 'backend-build', function ( done ) {
-    serverConfig.plugins = serverConfig.plugins.concat(
-        new webpack.DefinePlugin( {
-            "process.env": {
-                "NODE_ENV": JSON.stringify( "production" )
-            }
-        } ),
-        new webpack.optimize.UglifyJsPlugin()
-    );
-    webpack( serverConfig ).run( onBuild( done ) );
+    webpack( require('./webpack/webpack.config.server.production') ).run( onBuild( done ) );
 } );
 
 gulp.task( 'backend-watch', function ( done ) {
-    serverConfig.debug   = true;
-    serverConfig.plugins = serverConfig.plugins.concat(
-        new webpack.HotModuleReplacementPlugin(),
-        new webpack.DefinePlugin( {
-            "process.env": {
-                "NODE_ENV": JSON.stringify( "development" )
-            }
-        } )
-    );
+    var config = require('./webpack/webpack.config.server.dev');
 
     var firedDone = false;
-    webpack( serverConfig ).watch( 100, function ( err, stats ) {
+    webpack( config ).watch( 100, function ( err, stats ) {
         if ( !firedDone ) {
             firedDone = true;
             done();
         }
-
+        gutil.log( "[webpack]", stats.toString( {
+            colors: true
+        } ) );
         nodemon.restart();
     } );
 } );
@@ -109,6 +76,14 @@ gulp.task( 'run', ['backend-watch', 'frontend-watch'], function () {
         script:  path.join( __dirname, 'build/server' ),
         ignore:  ['*']
     } ).on( 'restart', function () {
-        console.log( 'Patched!' );
+        gutil.log( "[nodemon]", "Patched!" );
     } );
+} );
+
+/**
+ * Gracefully exit when interrupting process
+ * Otherwise nodemon hangs and webpack-dev-server keeps running
+ */
+process.on( 'SIGINT', () => {
+    process.exit( 0 );
 } );

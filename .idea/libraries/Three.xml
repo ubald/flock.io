@@ -1,0 +1,15 @@
+<component name="libraryTable">
+  <library name="Three" type="javaScript">
+    <properties>
+      <option name="frameworkName" value="three" />
+      <sourceFilesUrls>
+        <item url="file://$PROJECT_DIR$/node_modules/three" />
+      </sourceFilesUrls>
+    </properties>
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/node_modules/three" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

@@ -1,63 +1,44 @@
 "use strict";
 
 import "./client.less";
+import io from "socket.io-client";
+import Stats from "stats.js";
+import {GUI} from "dat.gui";
 import World from "./lib/engine/World";
 import TestScene from "./lib/scenes/TestScene";
+import DomeView from "./client/DomeRenderer";
 
-const world = new World( 'flock.io' );
-document.body.appendChild( world.renderer.domElement );
+// STATS
+const stats = new Stats();
+stats.showPanel( 0 );
+document.body.appendChild( stats.dom );
+
+// SOCKET.IO
+const socket = io.connect();
+
+// WORLD
+const world = new World( 'flock.io', {
+    renderer:     new DomeView(),
+    beforeUpdate: () => stats.begin(),
+    afterUpdate:  () => stats.end()
+} );
+document.body.appendChild( world.renderer.renderer.domElement );
 function onWindowResize() {
-    world.camera.aspect = window.innerWidth / window.innerHeight;
-    world.camera.updateProjectionMatrix();
-    world.renderer.setSize( window.innerWidth, window.innerHeight );
+    //world.camera.aspect = window.innerWidth / window.innerHeight;
+    //world.camera.updateProjectionMatrix();
+    world.renderer.renderer.setSize( window.innerWidth, window.innerHeight );
 }
 window.addEventListener( 'resize', onWindowResize, false );
 onWindowResize();
 
+// SCENE
 world.scene = new TestScene();
 
-
-/*
-
- import THREE from "three";
-
- var scene, camera, renderer;
- var geometry, material, mesh;
-
- init();
- animate();
-
- function init() {
-
- scene = new THREE.Scene();
-
- //camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
- //camera.position.z = 1000;
-
- geometry = new THREE.BoxGeometry( 200, 200, 200 );
- material = new THREE.MeshBasicMaterial( { color: 0xff0000, wireframe: true } );
-
- mesh = new THREE.Mesh( geometry, material );
- scene.add( mesh );
-
- //renderer = new THREE.WebGLRenderer();
- //renderer.setSize( window.innerWidth, window.innerHeight );
-
- //document.body.appendChild( renderer.domElement );
-
- }
-
- function animate() {
-
- requestAnimationFrame( animate );
-
- mesh.rotation.x += 0.01;
- mesh.rotation.y += 0.02;
-
- renderer.render( scene, camera );
- }
-
- */
-
-
-
+// DAT.GUI
+const gui = new GUI();
+gui.remember( world.renderer );
+var domeRendererGUI = gui.addFolder( 'Dome Renderer' );
+domeRendererGUI.add( world.renderer, 'domeAngle', 180, 270, 1 );
+domeRendererGUI.add( world.renderer, 'showGrid' );
+domeRendererGUI.add( world.renderer, 'gridResolution', 8, 128, 1 );
+domeRendererGUI.add( world.renderer, 'mapResolution', [ 128, 256, 512, 1024, 2048, 4096] );

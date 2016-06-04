@@ -1,68 +1,63 @@
 "use strict";
 
 import Scene from "../engine/Scene";
-import THREE from "three";
 
-/*
-import Body from "cannon/objects/Body"
-import Plane from "cannon/shapes/Plane"
-import Sphere from "cannon/shapes/Sphere"
-import Vec3 from "cannon/math/Vec3"*/
+if (__CLIENT__) {
+    var THREE = require( "three" );
+}
 
 export default class TestScene extends Scene {
     constructor() {
         super();
-        
-        // Setup our world
-        /*var world = new World();
-        world.gravity.set(0, 0, -9.82); // m/s²
-
-        // Create a sphere
-        var radius = 1; // m
-        var sphereBody = new Body({
-            mass: 5, // kg
-            position: new Vec3(0, 0, 10), // m
-            shape: new Sphere(radius)
-        });
-        world.addBody(sphereBody);
-
-        // Create a plane
-        var groundBody = new Body({
-            mass: 0 // mass == 0 makes the body static
-        });
-        var groundShape = new Plane();
-        groundBody.addShape(groundShape);
-        world.addBody(groundBody);
-
-        var fixedTimeStep = 1.0 / 60.0; // seconds
-        var maxSubSteps = 3;
-
-        // Start the simulation loop
-        var lastTime;
-        (function simloop(time){
-            requestAnimationFrame(simloop);
-            if(lastTime !== undefined){
-                var dt = (time - lastTime) / 1000;
-                world.step(fixedTimeStep, dt, maxSubSteps);
-            }
-            //console.log("Sphere z position: " + sphereBody.position.z);
-            lastTime = time;
-        })();*/
     }
 
-    _initVisual() {
-        super._initVisual();
-        
-        this.geometry = new THREE.SphereGeometry( 400, 16, 16, 0, Math.PI*2, 0, Math.PI/2 /* TODO: DOME ANGLE */);
-        this.material = new THREE.MeshBasicMaterial( { color: 0xff0000, wireframe: true } );
+    init(world) {
+        super.init(world);
 
-        this.mesh = new THREE.Mesh( this.geometry, this.material );
-        this.scene.add( this.mesh );
+        if ( __CLIENT__ ) {
+            var texture   = new THREE.TextureLoader().load( "ash_uvgrid01.jpg" );
+            this.material = new THREE.MeshBasicMaterial( { map: texture, side: THREE.DoubleSide } );
+
+            this.sphereGeometry = new THREE.SphereGeometry( 400, 64, 64 );
+            this.sphereMesh = new THREE.Mesh( this.sphereGeometry, this.material );
+            this.sphereMesh.receiveShadow = true;
+            this.scene.add( this.sphereMesh );
+
+            this.boxGeometry = new THREE.BoxGeometry( 100, 100, 100, 4, 4, 4 );
+            this.boxMesh = new THREE.Mesh( this.boxGeometry, this.material );
+            this.boxMesh.castShadow = true;
+            this.boxMesh.position.y = 300;
+            this.scene.add( this.boxMesh );
+
+            var light = new THREE.SpotLight( 0xffffff, 1, 600, Math.PI/2, 0.5 );
+            light.castShadow = true;
+            light.position.set( 0, 0, 0 );
+            light.rotation.x = -Math.PI / 2;
+            /*light.shadow.mapSize.width = 1024;
+            light.shadow.mapSize.height = 1024;
+
+            light.shadow.camera.near = 50;
+            light.shadow.camera.far = 4000;
+            light.shadow.camera.fov = 100;
+            light.shadow.bias = 0.4;*/
+            //this.scene.add( light );
+
+            this.acc = 0;
+        }
     }
 
-    _updateVisual() {
-        super._updateVisual();
+    update(dt) {
+        super.update(dt);
 
-        this.mesh.rotation.y += 0.01;
+        if ( __CLIENT__ ) {
+            this.sphereMesh.rotation.y += dt * 0.1;
+
+            this.acc += dt;
+            this.boxMesh.position.x = Math.sin(this.acc/2)* 100;
+            this.boxMesh.position.z = Math.cos(this.acc/2)* 100;
+            this.boxMesh.position.y = Math.sin(this.acc)* 100 + 100;
+            this.boxMesh.rotation.x += dt * 0.2;
+            this.boxMesh.rotation.y += dt * 0.1;
+        }
     }
 }

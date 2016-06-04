@@ -2,72 +2,57 @@
 
 import Id from "./Id";
 
-import CANNON from "cannon";
-import THREE from "three";
-
+/**
+ * Game World
+ */
 export default class World extends Id {
-    constructor( name ) {
+
+    /**
+     * Create a game world
+     *
+     * @param {String} name
+     * @param {Object} options - Options
+     * @param {Renderer} options.renderer - Renderer class to use for rendering the current scene
+     * @param {Function} options.beforeUpdate - Callback used before updating the world
+     * @param {Function} options.afterUpdate - Callback used after updating the world
+     */
+    constructor( name, options = {} ) {
         super( name );
 
-        this.fps           = 60.0;
-        this.tickLength    = 1e3 / this.fps;
-        this.fixedTimeStep = 1.0 / this.fps; // seconds
-        this.maxSubSteps   = 3;
+        // Options
+        this.options = options;
 
-        this.world = new CANNON.World();
-        this.world.gravity.set(0, 0, -9.82); // m/s²
+        // Renderer
+        this.renderer = options.renderer;
 
-        if ( CLIENT ) {
-            this.renderer = new THREE.WebGLRenderer({antialias: true});
-            this.renderer.setPixelRatio( window.devicePixelRatio );
+        // Loop parameters
+        this.fps        = 60.0;
+        this.tickLength = 1e3 / this.fps;
 
-            this.domeScene = new THREE.Scene();
-
-            //this.camera = new THREE.PerspectiveCamera( 2, 1 /* temporary value */, 1, 10000 );
-            this.camera = new THREE.OrthographicCamera( -200, 200, 200, -200, 1, 100000 );
-            this.camera.position.x = 0;
-            this.camera.position.y = 0;
-            this.camera.position.z = 0;
-            this.camera.rotation.x = Math.PI / 2;
-            this.domeScene.add(this.camera);
-
-            this.cubeCamera = new THREE.CubeCamera(1, 100000, 4096);
-            this.cubeCamera.position.x = 0;
-            this.cubeCamera.position.y = 0;
-            this.cubeCamera.position.z = 0;
-            this.domeGeometry = new THREE.SphereGeometry( 200, 32, 32, 0, Math.PI*2, 0, Math.PI/2 /* TODO: DOME ANGLE */);
-            this.domeGeometry.uvsNeedUpdate = true;
-            this.domeMaterial = new THREE.MeshBasicMaterial( {
-                envMap: this.cubeCamera.renderTarget.texture,
-                side: THREE.DoubleSide
-            } );
-            this.domeMesh = new THREE.Mesh( this.domeGeometry, this.domeMaterial );
-            //this.domeMesh.scale.y = -1;
-
-            //this.scene.add( this.cubeCamera );
-            this.domeScene.add( this.domeMesh );
-
-            //
-        }
-
+        // Loop
         if ( 'undefined' != typeof requestAnimationFrame ) {
-            this._requestAnimationFrameLoop = this._requestAnimationFrameLoop.bind(this);
+            // Browser, use requestAnimationFrame
+            this._requestAnimationFrameLoop = this._requestAnimationFrameLoop.bind( this );
             this._requestAnimationFrameLoop();
         } else {
-            this.previousTick = this._hrTime();
-            this._intervalLoop = this._intervalLoop.bind(this);
+            // Server, use interval
+            this.previousTick  = World._hrTime();
+            this._intervalLoop = this._intervalLoop.bind( this );
             this._intervalLoop();
         }
     }
 
-    get simulationOnly() {
-        return this._simulationOnly;
-    }
-
+    /**
+     * Scene
+     * @returns {Scene}
+     */
     get scene() {
         return this._scene;
     }
 
+    /**
+     * @param {Scene} scene
+     */
     set scene( scene ) {
         if ( this._scene ) {
             this._scene.destroy();
@@ -76,57 +61,78 @@ export default class World extends Id {
         this._scene = scene;
 
         if ( this._scene ) {
-            this._scene.world = this;
-            this._scene.init();
+            this._scene.init( this );
         }
     }
 
+    /**
+     * Request Animation Frame Loop
+     * @param {number} time - Time in nanoseconds
+     * @private
+     */
     _requestAnimationFrameLoop( time ) {
         requestAnimationFrame( this._requestAnimationFrameLoop );
         this.loop( time );
     }
 
-    _hrTime() {
+    /**
+     * Precise Hardware Time
+     * @returns {number}
+     * @private
+     */
+    static _hrTime() {
         const hrTime = process.hrtime();
         return hrTime[0] * 1e3 + hrTime[1] * 1e-6;
     }
 
+    /**
+     * Interval Loop
+     * @private
+     */
     _intervalLoop() {
-        let time   = this._hrTime();
+        let time = World._hrTime();
         if ( this.previousTick + this.tickLength <= time ) {
             this.previousTick = time;
             this.loop( time );
         }
 
-        if ( this._hrTime() - this.previousTick < this.tickLength - 16000 ) {
+        if ( World._hrTime() - this.previousTick < this.tickLength - 16000 ) {
             setTimeout( this._intervalLoop );
         } else {
             setImmediate( this._intervalLoop );
         }
     }
 
+    /**
+     * Update & Render Loop
+     * @param {number} time - Time in nanoseconds
+     */
     loop( time ) {
+        // Don't attempt a first run when it's the first loop
         if ( this.lastTime !== undefined ) {
             var dt = (time - this.lastTime) / 1000;
 
-            // Physics
-            this.world.step( this.fixedTimeStep, dt, this.maxSubSteps );
+            if ( this.options.beforeUpdate ) {
+                this.options.beforeUpdate();
+            }
 
-            // Scene
-            this.scene.update();
+            // Only render when we have an active scene
+            if ( this.scene ) {
 
-            // 3D
-            if ( CLIENT ) {
-                this.cubeCamera.updateCubeMap( this.renderer, this.scene.scene );
-                this.renderer.render( this.domeScene, this.camera );
+                // Scene Update
+                this.scene.update( dt );
+
+                // Renderer
+                if ( this.renderer ) {
+                    this.renderer.render( this.scene );
+                }
+
+            }
+
+            if ( this.options.afterUpdate ) {
+                this.options.afterUpdate();
             }
         }
         this.lastTime = time;
-    }
-
-    update() {
-        if ( this._scene ) {
-            this._scene.update();
-        }
     }
 }
