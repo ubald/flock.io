@@ -15,16 +15,20 @@ export default class DomeRenderer extends Renderer {
      * Create a Dome Renderer
      *
      * @param {float} domeAngle - Dome angle in degrees (ex: 180 or 210)
+     * @param {float} domeAngle - Dome angle in degrees (ex: 180 or 210)
      * @param {int} gridResolution - Resolution of the grid onto which the cube map is projected (grid size)
      * @param {int} mapResolution - Cube map resolution (pixels per face)
      */
-    constructor( domeAngle = 210, gridResolution = 64, mapResolution = 1024 ) {
+    constructor( domeAngle = 180, gridResolution = 64, mapResolution = 1024 ) {
         super();
 
         this._domeAngle = domeAngle;
         this._showGrid = false;
         this._gridResolution = gridResolution;
         this._mapResolution = mapResolution;
+        
+        this._swapViewers = true;
+        this._showDebugCamera = false;
         
         // Create the renderer
         this.renderer = new THREE.WebGLRenderer( {
@@ -41,16 +45,16 @@ export default class DomeRenderer extends Renderer {
         this.domeScene = new THREE.Scene();
 
         // Preview Camera - Monitor to preview what happens in the scene
-        this.previewCamera            = new THREE.PerspectiveCamera( 90, 1, 1, 100000 );
-        this.previewCamera.position.z = 1000;
-        this.controls                 = new THREE.OrbitControls( this.previewCamera );
+        this.debugCamera            = new THREE.PerspectiveCamera( 90, 1, 0.01, 100000 );
+        this.debugCamera.position.z = 20;
+        this.controls               = new THREE.OrbitControls( this.debugCamera );
 
         // Orthographic Camera - To capture the projected cube map
-        this.camera            = new THREE.OrthographicCamera( -0.5, 0.5, 0.5, -0.5, 1, 100000 );
-        this.camera.position.x = 0;
-        this.camera.position.y = 0;
-        this.camera.position.z = 1024; // Totally arbitrary
-        this.domeScene.add( this.camera );
+        this.domeCamera            = new THREE.OrthographicCamera( -0.5, 0.5, 0.5, -0.5, 0.01, 100000 );
+        this.domeCamera.position.x = 0;
+        this.domeCamera.position.y = 0;
+        this.domeCamera.position.z = 1024; // Totally arbitrary
+        this.domeScene.add( this.domeCamera );
 
         this.setup();
     }
@@ -89,6 +93,22 @@ export default class DomeRenderer extends Renderer {
     set showGrid(showGrid) {
         this._showGrid = showGrid;
         this.reset();
+    }
+    
+    get swapViewers() {
+        return this._swapViewers;
+    }
+    
+    set swapViewers(swap) {
+        this._swapViewers = swap;
+    }
+
+    get showDebugCamera() {
+        return this._showDebugCamera;
+    }
+
+    set showDebugCamera(debug) {
+        this._showDebugCamera = debug;
     }
 
     setup() {
@@ -200,22 +220,49 @@ export default class DomeRenderer extends Renderer {
 
     render( scene ) {
         super.render(scene);
+
+        let camera;
+        if ( !this._showDebugCamera && scene.camera ) {
+            camera = scene.camera;
+        } else {
+            // Update preview camera controls
+            this.controls.update();
+            camera = this.debugCamera;
+        }
         
         // Update cube cam
-        this.cubeCamera.updateCubeMap( this.renderer, scene.scene );
-        // Render dome at full size
+        this.cubeCamera.updateCubeMap( this.renderer, scene.stage );
+        
+        // Render full size viewer
         const size = this.renderer.getSize();
         this.renderer.setViewport( 0, 0, size.width, size.height );
         this.renderer.setScissorTest( false );
-        this.renderer.render( this.domeScene, this.camera );
+        if ( this.swapViewers ) {
+            this.renderer.render( scene.stage, camera );
+        } else {
+            this.renderer.render( this.domeScene, this.domeCamera );
+        }
 
-        // Update preview camera controls
-        this.controls.update();
-        // Render in a corner
+        // Render mini viewer
         this.renderer.setViewport( 12, 12, 256, 256 );
         this.renderer.setScissor( 12, 12, 256, 256 );
         this.renderer.setScissorTest( true );
-        this.renderer.render( scene.scene, this.previewCamera );
+        if ( this.swapViewers ) {
+            this.renderer.render( this.domeScene, this.domeCamera );
+        } else {
+            this.renderer.render( scene.stage, camera );
+        }
+
+        if ( scene.camera ) {
+            this.renderer.setViewport( 12 + 256 + 12, 12, 256, 256 );
+            this.renderer.setScissor( 12 + 256 + 12, 12, 256, 256 );
+            this.renderer.setScissorTest( true );
+            if ( this._showDebugCamera ) {
+                this.renderer.render( scene.stage, scene.camera );
+            } else {
+                this.renderer.render( scene.stage, this.debugCamera );
+            }
+        }
     }
 
 }

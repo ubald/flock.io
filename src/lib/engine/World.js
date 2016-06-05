@@ -1,6 +1,7 @@
-"use strict";
+'use strict';
 
 import Id from "./Id";
+import Input from "./Input";
 
 /**
  * Game World
@@ -25,6 +26,11 @@ export default class World extends Id {
         // Renderer
         this.renderer = options.renderer;
 
+        // Input
+        if ( __CLIENT__ ) {
+            this._input = new Input( this );
+        }
+
         // Loop parameters
         this.fps        = 60.0;
         this.tickLength = 1e3 / this.fps;
@@ -43,6 +49,14 @@ export default class World extends Id {
     }
 
     /**
+     * Input
+     * @returns {Input}
+     */
+    get input() {
+        return this._input;
+    }
+
+    /**
      * Scene
      * @returns {Scene}
      */
@@ -55,7 +69,7 @@ export default class World extends Id {
      */
     set scene( scene ) {
         if ( this._scene ) {
-            this._scene.destroy();
+            this._scene.dispose();
         }
 
         this._scene = scene;
@@ -117,14 +131,19 @@ export default class World extends Id {
             }
 
             // Only render when we have an active scene
-            if ( this.scene ) {
+            if ( this._scene ) {
+
+                // Input
+                if ( this._input ) {
+                    this._input.update();
+                }
 
                 // Scene Update
-                this.scene.update( dt );
+                this._scene.update( dt );
 
                 // Renderer
                 if ( this.renderer ) {
-                    this.renderer.render( this.scene );
+                    this.renderer.render( this._scene );
                 }
 
             }
@@ -135,4 +154,28 @@ export default class World extends Id {
         }
         this.lastTime = time;
     }
+
+    /*buttonPressed( controller, button, value ) {
+        if ( this._scene ) {
+            this._scene.buttonPressed( controller, button, value );
+        }
+    }
+
+    buttonReleased( controller, button, value ) {
+        if ( this._scene ) {
+            this._scene.buttonReleased( controller, button, value );
+        }
+    }
+
+    buttonDown( controller, button, value ) {
+        if ( this._scene ) {
+            this._scene.buttonDown( controller, button, value );
+        }
+    }
+
+    axisChanged( controller, axis, value ) {
+        if ( this._scene ) {
+            this._scene.axisChanged( controller, axis, value );
+        }
+    }*/
 }

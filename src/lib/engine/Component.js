@@ -31,22 +31,22 @@ export default class Component extends Id {
      * Add an component to the entity
      * @param {Component} component
      */
-    add( component ) {
+    addComponent( component ) {
         if ( !this._entity ) {
             throw new Error( "You can't add a component while not attached to a scene" );
         }
-        this._entity.add( component );
+        this._entity.addComponent( component );
     }
 
     /**
      * Remove an component from the entity
      * @param {Component} component
      */
-    remove( component ) {
+    removeComponent( component ) {
         if ( !this._entity ) {
             throw new Error( "You can't remove a component while not attached to a scene" );
         }
-        this._entity.remove( component );
+        this._entity.removeComponent( component );
     }
 
     /**
@@ -60,7 +60,7 @@ export default class Component extends Id {
     /**
      * Destroy the component
      */
-    destroy() {
+    dispose() {
         //
     }
 }

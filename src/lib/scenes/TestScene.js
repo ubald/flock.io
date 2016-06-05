@@ -1,8 +1,10 @@
 "use strict";
 
+import CANNON from "cannon";
 import Scene from "../engine/Scene";
+import TestHero from "./TestHero";
 
-if (__CLIENT__) {
+if ( __CLIENT__ ) {
     var THREE = require( "three" );
 }
 
@@ -11,53 +13,112 @@ export default class TestScene extends Scene {
         super();
     }
 
-    init(world) {
-        super.init(world);
+    init( world ) {
+        super.init( world );
+
+        this._physics.gravity.set( 0, 0, 0 ); // m/s²
+
+        this.hero = new TestHero( 'testHero' );
+        this.add( this.hero );
+
+        //Ground Physics
+        var groundShape = new CANNON.Plane();
+        var groundBody  = new CANNON.Body( { mass: 0, shape: groundShape } );
+        groundBody.quaternion.setFromAxisAngle( new CANNON.Vec3( 1, 0, 0 ), -Math.PI / 2 );
+        groundBody.position.set( 0, 0, 0 );
+        this.physics.addBody( groundBody );
+
+        this.anchor = new CANNON.Body( { mass: 0 } );
+        this.physics.addBody( this.anchor );
+
+        /*const spring = new CANNON.Spring( this.anchor, this.hero.body, {
+            restLength: 10,
+            stiffness:  100,
+            damping:    1
+        } );
+
+        this.physics.addEventListener( "postStep", function ( event ) {
+            spring.applyForce();
+        } );*/
+
+
+        this.radius = 10;
+
+        /*this.domeBody = new CANNON.Body({
+            mass: 0,
+            shape: new CANNON.Sphere(this.radius)
+        });
+        this.physics.addBody(this.domeBody);*/
+
+        //const distance = new CANNON.DistanceConstraint( this.anchor, this.hero.body, 10, 10 );
+        //this.physics.addConstraint( distance );
+
 
         if ( __CLIENT__ ) {
-            var texture   = new THREE.TextureLoader().load( "ash_uvgrid01.jpg" );
-            this.material = new THREE.MeshBasicMaterial( { map: texture, side: THREE.DoubleSide } );
+            var groundMaterial  = new THREE.MeshBasicMaterial( {
+                color:     0x003300,
+                wireframe: true,
+                side:      THREE.DoubleSide
+            } );
+            var ground_geometry = new THREE.PlaneGeometry( 10000, 10000, 100, 100 );
+            var ground          = new THREE.Mesh( ground_geometry, groundMaterial );
+            this.stage.add( ground );
 
-            this.sphereGeometry = new THREE.SphereGeometry( 400, 64, 64 );
-            this.sphereMesh = new THREE.Mesh( this.sphereGeometry, this.material );
-            this.sphereMesh.receiveShadow = true;
-            this.scene.add( this.sphereMesh );
+            //Ground Preview
+            ground.quaternion.copy( groundBody.quaternion );
+            ground.position.copy( groundBody.position );
 
-            this.boxGeometry = new THREE.BoxGeometry( 100, 100, 100, 4, 4, 4 );
-            this.boxMesh = new THREE.Mesh( this.boxGeometry, this.material );
-            this.boxMesh.castShadow = true;
-            this.boxMesh.position.y = 300;
-            this.scene.add( this.boxMesh );
+            // Dome Preview
+            this.domeMaterial = new THREE.MeshBasicMaterial( {
+                color:     0x303030,
+                wireframe: true,
+                side:      THREE.DoubleSide
+            } );
+            this.domeGeometry = new THREE.SphereGeometry( this.radius, 16, 16 );
+            this.domeMesh     = new THREE.Mesh( this.domeGeometry, this.domeMaterial );
+            this.domeMesh.position.set( 0, 0, 0 );
+            this.stage.add( this.domeMesh );
 
-            var light = new THREE.SpotLight( 0xffffff, 1, 600, Math.PI/2, 0.5 );
-            light.castShadow = true;
-            light.position.set( 0, 0, 0 );
-            light.rotation.x = -Math.PI / 2;
-            /*light.shadow.mapSize.width = 1024;
-            light.shadow.mapSize.height = 1024;
+            var pointLight = new THREE.PointLight( 0xffffff, 1, 100 );
+            pointLight.position.set( 0, this.radius + 5, 0 );
+            this.stage.add( pointLight );
 
-            light.shadow.camera.near = 50;
-            light.shadow.camera.far = 4000;
-            light.shadow.camera.fov = 100;
-            light.shadow.bias = 0.4;*/
-            //this.scene.add( light );
+            var sphereSize       = 1;
+            var pointLightHelper = new THREE.PointLightHelper( pointLight, sphereSize );
+            this.stage.add( pointLightHelper );
 
-            this.acc = 0;
+            this.cameraNull         = new THREE.Object3D();
+            this._camera            = new THREE.PerspectiveCamera( 90, 1, 1, 100000 );
+            this._camera.position.z = -5;
+            this._camera.rotateY( Math.PI );
+            this.cameraNull.add( this._camera );
+            this.stage.add( this.cameraNull );
+
+            this.cameraHelper = new THREE.CameraHelper( this._camera );
+            this.stage.add( this.cameraHelper );
         }
     }
 
-    update(dt) {
-        super.update(dt);
+    update( dt ) {
+        super.update( dt );
+
+        // Planet gravity
+        const height = this.hero.body.position.length();
+        if ( Math.abs( height - this.radius ) > 1 ) {
+            const mult = height > this.radius ? -1 : 1;
+            this.hero.body.force.set(
+                mult * this.hero.body.position.x,
+                mult * this.hero.body.position.y,
+                mult * this.hero.body.position.z
+            ).normalize();
+            this.hero.body.force.scale( 9.82 * 10, this.hero.body.force );
+        }
 
         if ( __CLIENT__ ) {
-            this.sphereMesh.rotation.y += dt * 0.1;
-
-            this.acc += dt;
-            this.boxMesh.position.x = Math.sin(this.acc/2)* 100;
-            this.boxMesh.position.z = Math.cos(this.acc/2)* 100;
-            this.boxMesh.position.y = Math.sin(this.acc)* 100 + 100;
-            this.boxMesh.rotation.x += dt * 0.2;
-            this.boxMesh.rotation.y += dt * 0.1;
+            this.cameraNull.position.copy( this.hero.body.position );
+            this.cameraNull.quaternion.copy( this.hero.body.quaternion );
+            //.setLength( this.hero.position.length() + 10 );
+            //this._camera.lookAt(new THREE.Vector3(0,0,0));
         }
     }
 }

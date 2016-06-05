@@ -3,11 +3,11 @@
     <properties>
       <option name="frameworkName" value="cannon" />
       <sourceFilesUrls>
-        <item url="file://$PROJECT_DIR$/node_modules/cannon/src" />
+        <item url="file://$PROJECT_DIR$/node_modules/cannon" />
       </sourceFilesUrls>
     </properties>
     <CLASSES>
-      <root url="file://$PROJECT_DIR$/node_modules/cannon/src" />
+      <root url="file://$PROJECT_DIR$/node_modules/cannon" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

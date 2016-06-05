@@ -2047,7 +2047,7 @@ dat.GUI = dat.gui.GUI = (function (css, saveDialogueContents, styleSheet, contro
 
             },
 
-            destroy: function() {
+            dispose: function() {
 
                 if (this.autoPlace) {
                     auto_place_container.removeChild(this.domElement);

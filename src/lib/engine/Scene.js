@@ -19,6 +19,8 @@ export default class Scene extends Id {
     constructor( name ) {
         super( name );
 
+        this._initialized = false;
+
         // Entities
         this._entities = [];
         
@@ -26,6 +28,10 @@ export default class Scene extends Id {
         this.maxSubSteps = 3;
     }
 
+    initialized() {
+        return this._initialized;
+    }
+    
     /**
      * World
      * @returns {World}
@@ -43,11 +49,11 @@ export default class Scene extends Id {
     }
 
     /**
-     * Scene
+     * Stage
      * @returns {THREE.Scene}
      */
-    get scene() {
-        return this._scene;
+    get stage() {
+        return this._stage;
     }
 
     /**
@@ -56,6 +62,14 @@ export default class Scene extends Id {
      */
     get entities() {
         return this._entities;
+    }
+
+    /**
+     * Camera
+     * @returns {THREE.Camera}
+     */
+    get camera() {
+        return this._camera;
     }
 
     /**
@@ -69,22 +83,26 @@ export default class Scene extends Id {
 
         // Physics
         this._physics = new CANNON.World();
-        this._physics.gravity.set( 0, 0, -9.82 ); // m/s²
+        this._physics.gravity.set( 0, -9.82, 0 ); // m/s²
         
         // Visual
         if ( __CLIENT__ ) {
-            this._scene = new THREE.Scene();
+            this._stage = new THREE.Scene();
         }
+
+        this._entities.forEach( entity => entity.init() );
+
+        this._initialized = true;
     }
 
     /**
      * Destroy the scene
      */
-    destroy() {
+    dispose() {
         if ( __CLIENT__ ) {
-            this._scene = null;
+            this._stage = null;
         }
-        this._entities.forEach( entity => entity.destroy() );
+        this._entities.forEach( entity => entity.dispose() );
         this._physics = null;
     }
 
@@ -98,6 +116,9 @@ export default class Scene extends Id {
         }
         entity.scene = this;
         this._entities.push( entity );
+        if ( this._initialized ) {
+            entity.init();
+        }
     }
 
     /**
@@ -113,6 +134,7 @@ export default class Scene extends Id {
         }
         entity.scene = null;
         this._entities.splice( this._entities.indexOf( entity ), 1 );
+        entity.dispose();
     }
 
     /**
@@ -127,4 +149,20 @@ export default class Scene extends Id {
         // Physics Update
         this._physics.step( this.fixedTimeStep, dt, this.maxSubSteps );
     }
+
+    /*buttonPressed(controller, button, value) {
+        //
+    }
+
+    buttonReleased(controller, button, value) {
+        //
+    }
+
+    buttonDown(controller, button, value) {
+        //
+    }
+
+    axisChanged( controller, axis, value ) {
+        //
+    }*/
 }

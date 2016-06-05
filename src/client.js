@@ -36,9 +36,12 @@ world.scene = new TestScene();
 
 // DAT.GUI
 const gui = new GUI();
-gui.remember( world.renderer );
+//gui.remember( world.renderer );
 var domeRendererGUI = gui.addFolder( 'Dome Renderer' );
+domeRendererGUI.open();
 domeRendererGUI.add( world.renderer, 'domeAngle', 180, 270, 1 );
 domeRendererGUI.add( world.renderer, 'showGrid' );
 domeRendererGUI.add( world.renderer, 'gridResolution', 8, 128, 1 );
 domeRendererGUI.add( world.renderer, 'mapResolution', [ 128, 256, 512, 1024, 2048, 4096] );
+domeRendererGUI.add( world.renderer, 'swapViewers' );
+domeRendererGUI.add( world.renderer, 'showDebugCamera' );
