@@ -103,7 +103,7 @@ export default class Entity extends Id {
         if ( !component ) {
             throw new Error( "You can't remove a null component" );
         }
-        if ( component.scene != this ) {
+        if ( component.entity != this ) {
             throw new Error( `You can't remove component ${component.name} from ${this.name} as this scene does not own the component` );
         }
         component.entity = null;
@@ -128,11 +128,11 @@ export default class Entity extends Id {
 
     init() {
         if ( this.body ) {
-            this.scene.physics.addBody(this.body);
+            this._scene.physics.addBody(this.body);
         }
         if ( __CLIENT__ ) {
             this._object3D = new THREE.Object3D();
-            this.scene.stage.add( this._object3D );
+            this._scene.stage.add( this._object3D );
         }
         this._components.forEach( component => component.init );
     }
@@ -158,10 +158,10 @@ export default class Entity extends Id {
      */
     dispose() {
         if ( this.body ) {
-            this.scene.physics.removeBody(this.body);
+            this._scene.physics.removeBody(this.body);
         }
         this._components.forEach( components => components.dispose() );
-        this.scene.stage.remove( this._object3D );
+        this._scene.stage.remove( this._object3D );
         this._object3D = null;
     }
 }

@@ -6,7 +6,7 @@ import Stats from "stats.js";
 import {GUI} from "dat.gui";
 import World from "./lib/engine/World";
 import TestScene from "./lib/scenes/TestScene";
-import DomeView from "./client/DomeRenderer";
+import DomeRenderer from "./client/DomeRenderer";
 
 // STATS
 const stats = new Stats();
@@ -18,15 +18,13 @@ const socket = io.connect();
 
 // WORLD
 const world = new World( 'flock.io', {
-    renderer:     new DomeView(),
+    renderer:     new DomeRenderer(),
     beforeUpdate: () => stats.begin(),
     afterUpdate:  () => stats.end()
 } );
 document.body.appendChild( world.renderer.renderer.domElement );
 function onWindowResize() {
-    //world.camera.aspect = window.innerWidth / window.innerHeight;
-    //world.camera.updateProjectionMatrix();
-    world.renderer.renderer.setSize( window.innerWidth, window.innerHeight );
+    world.setSize( window.innerWidth, window.innerHeight );
 }
 window.addEventListener( 'resize', onWindowResize, false );
 onWindowResize();
@@ -43,5 +41,5 @@ domeRendererGUI.add( world.renderer, 'domeAngle', 180, 270, 1 );
 domeRendererGUI.add( world.renderer, 'showGrid' );
 domeRendererGUI.add( world.renderer, 'gridResolution', 8, 128, 1 );
 domeRendererGUI.add( world.renderer, 'mapResolution', [ 128, 256, 512, 1024, 2048, 4096] );
-domeRendererGUI.add( world.renderer, 'swapViewers' );
-domeRendererGUI.add( world.renderer, 'showDebugCamera' );
+domeRendererGUI.add( world.renderer, 'mainView', world.renderer.availableViews );
+domeRendererGUI.add( world.renderer, 'showDebugViews' );

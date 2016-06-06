@@ -3,8 +3,8 @@
 import Entity from "../engine/Entity";
 import CANNON from "cannon";
 
+var THREE = require( "three" );
 if ( __CLIENT__ ) {
-    var THREE = require( "three" );
     require( "three/examples/js/loaders/STLLoader" )
 }
 
@@ -25,14 +25,29 @@ export default class TestHero extends Entity {
 
     init() {
         super.init();
-        
+
         if ( __CLIENT__ ) {
             this.scene.world.input.axes
-                .subscribe( this._move.bind( this ) );
+                .subscribe( this._controllerControl.bind( this ) );
 
+            this.scene.world.input.keyPress
+                .filter(({key}) => key == 'w' || key == 'ArrowUp')
+                .subscribe( this._keyboardThrustForwards.bind( this ) );
+
+            this.scene.world.input.keyPress
+                .filter(({key}) => key == 's' || key == 'ArrowDown')
+                .subscribe( this._keyboardThrustBackwards.bind( this ) );
+
+            this.scene.world.input.keyPress
+                .filter(({key}) => key == 'a' || key == 'ArrowLeft')
+                .subscribe( this._keyboardBankLeft.bind( this ) );
+
+            this.scene.world.input.keyPress
+                .filter(({key}) => key == 'd' || key == 'ArrowwRight')
+                .subscribe( this._keyboardBankRight.bind( this ) );
 
             var loader = new THREE.STLLoader();
-            loader.load( '/assets/bird1.stl', geometry => {
+            loader.load( '/assets/bird.stl', geometry => {
                 geometry.rotateX( -Math.PI / 2 );
                 //geometry.rotateY( Math.PI );
                 this.material = new THREE.MeshNormalMaterial( { color: 0xFFC107, side: THREE.DoubleSide } );
@@ -41,30 +56,45 @@ export default class TestHero extends Entity {
 
                 //var normals = new THREE.VertexNormalsHelper( this.heroMesh, 0.2, 0x00ff00, 1 );
                 //this.addObject( normals );
-            } );
 
-            this.debugBox = new THREE.BoxGeometry(2, 3, 4, 1, 1, 1);
-            this.debugBoxMesh = new THREE.Mesh( this.debugBox, new THREE.MeshBasicMaterial({color: 0x0000ff, wireframe: true}));
-            this.scene.stage.add(this.debugBoxMesh);
+                //this.frontArrowHelper = new THREE.ArrowHelper( new THREE.Vector3(0,0,1), new THREE.Vector3(0,0,0), 1, 0xff0000 );
+                //this.scene.stage.add( this.frontArrowHelper );
+            } );
         }
     }
 
     update( dt ) {
         super.update( dt );
-        
-        // Slight rotation from angle (pseudo flight sim)
-        const rotation = new CANNON.Vec3();
-        this.body.quaternion.toEuler(rotation);
+
+
+        const bodyRotation = new CANNON.Vec3();
+        this.body.quaternion.toEuler( bodyRotation );
+
+        const bodyFront = new CANNON.Vec3( 0, 0, 1 );
+        const bodySide  = new CANNON.Vec3( -1, 0, 0 );
+
+        const center = this._body.pointToLocalFrame( new CANNON.Vec3( 0, 0, 0 ) );
+
+        const v1 = new THREE.Vector3( bodyFront.x, bodyFront.y, bodyFront.z );
+        const v2 = new THREE.Vector3( bodySide.x, bodySide.y, bodySide.z );
+        const v3 = new THREE.Vector3( center.x, center.y, center.z );
+
         this.body.angularVelocity.vadd(
             this.body.vectorToWorldFrame(
                 new CANNON.Vec3(
-                    0,
-                    -rotation.z * 0.05,
-                    0
+                    (v1.angleTo( v3 ) - Math.PI / 2) * 0.25,
+                    (v2.angleTo( v3 ) - Math.PI / 2) * 0.01, // Bank rotation
+                    (v2.angleTo( v3 ) - Math.PI / 2) * 0.05,
                 )
             ),
             this.body.angularVelocity
         );
+
+        /*if (__CLIENT__) {
+            this.frontArrowHelper.position.copy(this._body.position);
+            this.frontArrowHelper.quaternion.copy(this._body.quaternion);
+            this.frontArrowHelper.setDirection(this.object3D.worldToLocal(new THREE.Vector3(0,0,0)));
+        }*/
     }
 
     dispose() {
@@ -76,10 +106,12 @@ export default class TestHero extends Entity {
         super.dispose();
     }
 
-    _move( axis ) {
+    _controllerControl( axis ) {
         switch ( axis.id ) {
             case 0:
                 //this.body.applyLocalForce( new CANNON.Vec3( axis.value * 100, 0, 0 ), new CANNON.Vec3( 0, 0, 0 ) );
+
+                //this.body.applyLocalForce( new CANNON.Vec3( axis.value * -100, 0, 0 ), new CANNON.Vec3( 0, 0, 0 ) );
                 break;
 
             case 1:
@@ -94,7 +126,7 @@ export default class TestHero extends Entity {
                         new CANNON.Vec3(
                             0,
                             0,
-                            axis.value * Math.max(1,this.body.vectorToLocalFrame(this.body.velocity).z) * 0.01
+                            axis.value * Math.max( 1, this.body.vectorToLocalFrame( this.body.velocity ).z ) * 0.01
                         )
                     ),
                     this.body.angularVelocity
@@ -105,7 +137,7 @@ export default class TestHero extends Entity {
                 this.body.angularVelocity.vadd(
                     this.body.vectorToWorldFrame(
                         new CANNON.Vec3(
-                            axis.value * Math.max(1,this.body.vectorToLocalFrame(this.body.velocity).z) * -0.01,
+                            axis.value * Math.max( 1, this.body.vectorToLocalFrame( this.body.velocity ).z ) * -0.01,
                             0,
                             0
                         )
@@ -114,5 +146,39 @@ export default class TestHero extends Entity {
                 );
                 break;
         }
+    }
+
+    _keyboardThrustForwards() {
+        this.body.applyLocalForce( new CANNON.Vec3( 0, 0, 100 ), new CANNON.Vec3( 0, 0, 0 ) );
+    }
+
+    _keyboardThrustBackwards() {
+        this.body.applyLocalForce( new CANNON.Vec3( 0, 0, -100 ), new CANNON.Vec3( 0, 0, 0 ) );
+    }
+
+    _keyboardBankLeft() {
+        this.body.angularVelocity.vadd(
+            this.body.vectorToWorldFrame(
+                new CANNON.Vec3(
+                    0,
+                    0,
+                    -Math.max( 1, this.body.vectorToLocalFrame( this.body.velocity ).z ) * 0.01
+                )
+            ),
+            this.body.angularVelocity
+        );
+    }
+
+    _keyboardBankRight() {
+        this.body.angularVelocity.vadd(
+            this.body.vectorToWorldFrame(
+                new CANNON.Vec3(
+                    0,
+                    0,
+                    Math.max( 1, this.body.vectorToLocalFrame( this.body.velocity ).z ) * 0.01
+                )
+            ),
+            this.body.angularVelocity
+        );
     }
 }

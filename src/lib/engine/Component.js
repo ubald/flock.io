@@ -7,6 +7,13 @@ import Id from "./Id";
  */
 export default class Component extends Id {
 
+    /**
+     * Entity
+     * @type {Entity}
+     * @private
+     */
+    _entity = null;
+
     constructor( name ) {
         super( name );
     }

@@ -75,7 +75,13 @@ export default class World extends Id {
         this._scene = scene;
 
         if ( this._scene ) {
-            this._scene.init( this );
+            this._scene.initialize( this );
+        }
+    }
+
+    setSize( width, height ) {
+        if ( this.renderer ) {
+            this.renderer.setSize( width, height );
         }
     }
 
@@ -156,26 +162,26 @@ export default class World extends Id {
     }
 
     /*buttonPressed( controller, button, value ) {
-        if ( this._scene ) {
-            this._scene.buttonPressed( controller, button, value );
-        }
-    }
+     if ( this._scene ) {
+     this._scene.buttonPressed( controller, button, value );
+     }
+     }
 
-    buttonReleased( controller, button, value ) {
-        if ( this._scene ) {
-            this._scene.buttonReleased( controller, button, value );
-        }
-    }
+     buttonReleased( controller, button, value ) {
+     if ( this._scene ) {
+     this._scene.buttonReleased( controller, button, value );
+     }
+     }
 
-    buttonDown( controller, button, value ) {
-        if ( this._scene ) {
-            this._scene.buttonDown( controller, button, value );
-        }
-    }
+     buttonDown( controller, button, value ) {
+     if ( this._scene ) {
+     this._scene.buttonDown( controller, button, value );
+     }
+     }
 
-    axisChanged( controller, axis, value ) {
-        if ( this._scene ) {
-            this._scene.axisChanged( controller, axis, value );
-        }
-    }*/
+     axisChanged( controller, axis, value ) {
+     if ( this._scene ) {
+     this._scene.axisChanged( controller, axis, value );
+     }
+     }*/
 }

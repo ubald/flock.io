@@ -3,7 +3,7 @@
 import Id from "./Id";
 import CANNON from "cannon";
 
-if (__CLIENT__) {
+if ( __CLIENT__ ) {
     var THREE = require( "three" );
 }
 
@@ -23,7 +23,7 @@ export default class Scene extends Id {
 
         // Entities
         this._entities = [];
-        
+
         // Physics
         this.maxSubSteps = 3;
     }
@@ -31,7 +31,7 @@ export default class Scene extends Id {
     initialized() {
         return this._initialized;
     }
-    
+
     /**
      * World
      * @returns {World}
@@ -72,27 +72,45 @@ export default class Scene extends Id {
         return this._camera;
     }
 
+    initialize( world ) {
+        this._world = world;
+
+        this._preInit();
+        this._init();
+        this._postInit();
+        
+        this._initialized = true;
+    }
+
+    _preInit() {
+        
+    }
+
     /**
      * Initialize the scene
      * @param {World} world
      */
-    init(world) {
+    _init() {
         // World
-        this._world = world;
         this.fixedTimeStep = 1.0 / this._world.fps; // seconds
 
         // Physics
         this._physics = new CANNON.World();
         this._physics.gravity.set( 0, -9.82, 0 ); // m/s²
-        
+
         // Visual
         if ( __CLIENT__ ) {
             this._stage = new THREE.Scene();
         }
 
-        this._entities.forEach( entity => entity.init() );
+    }
 
-        this._initialized = true;
+    _postInit() {
+        if ( __CLIENT__ ) {
+            this.world.renderer.camera = this._camera;
+        }
+
+        this._entities.forEach( entity => entity.init() );
     }
 
     /**
@@ -141,28 +159,28 @@ export default class Scene extends Id {
      * Update the scene
      * @param {number} dt - Time delta since last update
      */
-    update(dt) {
+    update( dt ) {
 
         // Entities update
-        this._entities.forEach( entity => entity.update(dt) );
+        this._entities.forEach( entity => entity.update( dt ) );
 
         // Physics Update
         this._physics.step( this.fixedTimeStep, dt, this.maxSubSteps );
     }
 
     /*buttonPressed(controller, button, value) {
-        //
-    }
+     //
+     }
 
-    buttonReleased(controller, button, value) {
-        //
-    }
+     buttonReleased(controller, button, value) {
+     //
+     }
 
-    buttonDown(controller, button, value) {
-        //
-    }
+     buttonDown(controller, button, value) {
+     //
+     }
 
-    axisChanged( controller, axis, value ) {
-        //
-    }*/
+     axisChanged( controller, axis, value ) {
+     //
+     }*/
 }

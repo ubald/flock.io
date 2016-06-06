@@ -7,16 +7,14 @@ export default class Input {
     constructor( world ) {
         this._world = world;
 
+        // CONTROLLER
         this._haveEvents = 'ongamepadconnected' in window;
 
         this._deadZone = 0.1;
 
         this._controllers            = {};
         this._lastControllerState    = {};
-        this._currentControllerState = {};
         this._detectControllers();
-
-        console.log( this._controllers );
 
         window.addEventListener( "gamepadconnected", e => this._controllerHandler( e, true ), false );
         window.addEventListener( "gamepaddisconnected", e => this._controllerHandler( e, false ), false );
@@ -25,6 +23,18 @@ export default class Input {
         this._buttonReleasedSubject = new Subject();
         this._buttonDownSubject = new Subject();
         this._axesSubject = new Subject();
+
+        // KEYBOARD
+        window.addEventListener('keydown',e => this._onKeyDown(e),false);
+        window.addEventListener('keypress',e => this._onKeyPress(e),false);
+        window.addEventListener('keyup',e => this._onKeyUp(e),false);
+
+        this._keyPressSubject = new Subject();
+        this._keyDownSubject = new Subject();
+        this._keyUpSubject = new Subject();
+
+        this._keys = {};
+        this._lastKeys = {};
     }
 
     get controllers() {
@@ -47,6 +57,18 @@ export default class Input {
         return this._axesSubject;
     }
 
+    get keyPress() {
+        return this._keyPressSubject;
+    }
+
+    get keyDown() {
+        return this._keyDownSubject;
+    }
+
+    get keyUp() {
+        return this._keyUpSubject;
+    }
+
     _detectControllers() {
         const detected = navigator.getGamepads ? navigator.getGamepads() : (navigator.webkitGetGamepads ? navigator.webkitGetGamepads : []);
         for ( var i = 0; i < detected.length; i++ ) {
@@ -66,16 +88,11 @@ export default class Input {
             buttons: {},
             axes:    {}
         };
-        this._currentControllerState[controller.index] = {
-            buttons: {},
-            axes:    {}
-        };
     }
 
     _removeController( controller ) {
         delete this._controllers[controller.index];
         delete this._lastControllerState[controller.index];
-        delete this._currentControllerState[controller.index];
     }
 
     _controllerHandler( event, connecting ) {
@@ -90,65 +107,89 @@ export default class Input {
         }
     }
 
+    _onKeyDown(e) {
+        this._keys[e.key] = true;
+    }
+
+    _onKeyPress(e) {
+        this._keys[e.key] = true;
+    }
+
+    _onKeyUp(e) {
+        this._keys[e.key] = false;
+    }
+
     update() {
-        if ( !this._controllers || !this._controllers[0] ) {
-            return;
+        // KEYBOARD
+        for ( const key in this._keys ) {
+            if ( this._keys[key] ) {
+                if ( !this._lastKeys[key] ) {
+                    this._keyDownSubject.next( { key } );
+                }
+                this._keyPressSubject.next( { key } );
+            } else {
+                this._keyUpSubject.next( { key } );
+                delete this._keys[key];
+            }
         }
 
-        if ( !this._haveEvents ) {
-            this._detectControllers();
-        }
-
-        for ( var i in this._controllers ) {
-            const controller = this._controllers[i];
-            const lastState  = this._lastControllerState[i];
-
-            for ( var j = 0; j < controller.buttons.length; j++ ) {
-                const button = controller.buttons[j];
-
-                if ( !lastState.buttons[j] ) {
-                    lastState.buttons[j] = { pressed: false, value: 0.0 };
-                }
-                const lastButtonState = lastState.buttons[j];
-
-                if ( !button.pressed && lastButtonState.pressed ) {
-                    // button released
-                    //console.log( "BUTTON RELEASED", j );
-                    this._buttonReleasedSubject.next( { controller, button: j, value: button.value } );
-
-                } else if ( button.pressed && !lastButtonState.pressed ) {
-                    // button pressed
-                    //console.log( "BUTTON PRESSED", j );
-                    this._buttonPressedSubject.next( { controller, button: j, value: button.value } );
-
-                } else if ( button.pressed ) {
-                    // button down
-                    //console.log( "BUTTON DOWN", j );
-                    this._buttonDownSubject.next( { controller, button: j, value: button.value } );
-
-                }
-
-                lastButtonState.pressed = button.pressed;
-                lastButtonState.value   = button.value;
+        // CONTROLLER
+        if ( this._controllers && this._controllers[0] ) {
+            if ( !this._haveEvents ) {
+                this._detectControllers();
             }
 
-            for ( var k = 0; k < controller.axes.length; k++ ) {
-                var axis     = controller.axes[k];
-                var lastAxis = lastState.axes[k] || 0.0;
+            for ( var i in this._controllers ) {
+                const controller = this._controllers[i];
+                const lastState  = this._lastControllerState[i];
 
-                // Deadzone
-                if ( axis <= this._deadZone && axis >= -this._deadZone ) {
-                    continue;
+                for ( var j = 0; j < controller.buttons.length; j++ ) {
+                    const button = controller.buttons[j];
+
+                    if ( !lastState.buttons[j] ) {
+                        lastState.buttons[j] = { pressed: false, value: 0.0 };
+                    }
+                    const lastButtonState = lastState.buttons[j];
+
+                    if ( !button.pressed && lastButtonState.pressed ) {
+                        // button released
+                        //console.log( "BUTTON RELEASED", j );
+                        this._buttonReleasedSubject.next( { controller, button: j, value: button.value } );
+
+                    } else if ( button.pressed && !lastButtonState.pressed ) {
+                        // button pressed
+                        //console.log( "BUTTON PRESSED", j );
+                        this._buttonPressedSubject.next( { controller, button: j, value: button.value } );
+
+                    } else if ( button.pressed ) {
+                        // button down
+                        //console.log( "BUTTON DOWN", j );
+                        this._buttonDownSubject.next( { controller, button: j, value: button.value } );
+
+                    }
+
+                    lastButtonState.pressed = button.pressed;
+                    lastButtonState.value   = button.value;
                 }
-                
-                //if ( axis != lastAxis ) {
+
+                for ( var k = 0; k < controller.axes.length; k++ ) {
+                    var axis     = controller.axes[k];
+                    var lastAxis = lastState.axes[k] || 0.0;
+
+                    // Deadzone
+                    if ( axis <= this._deadZone && axis >= -this._deadZone ) {
+                        continue;
+                    }
+
+                    //if ( axis != lastAxis ) {
                     // axis
                     //console.log( k + ": " + controller.axes[k] );//.toFixed(4) );
                     //console.log({ controller, id: k, value: axis });
                     this._axesSubject.next( { controller, id: k, value: axis } );
-                //}
+                    //}
 
-                lastState.axes[k] = axis;
+                    lastState.axes[k] = axis;
+                }
             }
         }
     }

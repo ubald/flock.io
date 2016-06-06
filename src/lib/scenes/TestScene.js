@@ -13,8 +13,8 @@ export default class TestScene extends Scene {
         super();
     }
 
-    init( world ) {
-        super.init( world );
+    _init( ) {
+        super._init( );
 
         this._physics.gravity.set( 0, 0, 0 ); // m/s²
 
@@ -26,10 +26,10 @@ export default class TestScene extends Scene {
         var groundBody  = new CANNON.Body( { mass: 0, shape: groundShape } );
         groundBody.quaternion.setFromAxisAngle( new CANNON.Vec3( 1, 0, 0 ), -Math.PI / 2 );
         groundBody.position.set( 0, 0, 0 );
-        this.physics.addBody( groundBody );
+        //this.physics.addBody( groundBody );
 
-        this.anchor = new CANNON.Body( { mass: 0 } );
-        this.physics.addBody( this.anchor );
+        //this.anchor = new CANNON.Body( { mass: 0 } );
+        //this.physics.addBody( this.anchor );
 
         /*const spring = new CANNON.Spring( this.anchor, this.hero.body, {
             restLength: 10,
@@ -102,19 +102,20 @@ export default class TestScene extends Scene {
     update( dt ) {
         super.update( dt );
 
+
         // Planet gravity
         const height = this.hero.body.position.length();
         if ( Math.abs( height - this.radius ) > 1 ) {
-            const mult = height > this.radius ? -1 : 1;
+            const mult = (height > this.radius ? -1 : 1) * 9.82;// * 20;
             this.hero.body.force.set(
                 mult * this.hero.body.position.x,
                 mult * this.hero.body.position.y,
                 mult * this.hero.body.position.z
-            ).normalize();
-            this.hero.body.force.scale( 9.82 * 10, this.hero.body.force );
+            );
         }
 
         if ( __CLIENT__ ) {
+            this.cameraHelper.update();
             this.cameraNull.position.copy( this.hero.body.position );
             this.cameraNull.quaternion.copy( this.hero.body.quaternion );
             //.setLength( this.hero.position.length() + 10 );
