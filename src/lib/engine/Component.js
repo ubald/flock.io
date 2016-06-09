@@ -14,8 +14,16 @@ export default class Component extends Id {
      */
     _entity = null;
 
-    constructor( name ) {
+    /**
+     * Create a component
+     * @param {String} name
+     * @param {Object} [config]
+     */
+    constructor( name, config = {}) {
         super( name );
+        
+        // Config
+        this._config = config;
     }
 
     /**
@@ -54,6 +62,13 @@ export default class Component extends Id {
             throw new Error( "You can't remove a component while not attached to a scene" );
         }
         this._entity.removeComponent( component );
+    }
+
+    /**
+     * Initialize the component
+     */
+    init() {
+        //
     }
 
     /**

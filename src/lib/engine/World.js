@@ -1,7 +1,12 @@
 'use strict';
 
 import Id from "./Id";
-import Input from "./Input";
+
+if ( __CLIENT__ ) {
+    var Input = require("./InputClient").default;
+} else {
+    var Input = require("./InputServer").default;
+}
 
 /**
  * Game World
@@ -27,9 +32,7 @@ export default class World extends Id {
         this.renderer = options.renderer;
 
         // Input
-        if ( __CLIENT__ ) {
-            this._input = new Input( this );
-        }
+        this._input = new Input( this );
 
         // Loop parameters
         this.fps        = 60.0;

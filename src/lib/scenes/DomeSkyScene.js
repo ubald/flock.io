@@ -1,58 +1,58 @@
 "use strict";
 
+import _ from "lodash";
+import THREE from "three";
 import CANNON from "cannon";
 import Scene from "../engine/Scene";
-import TestHero from "./TestHero";
+import Bird from "../entities/Bird";
+import Hero from "../entities/Hero";
+import Wander from "../engine/components/Wander"
 
-if ( __CLIENT__ ) {
-    var THREE = require( "three" );
-}
+export default class DomeSkyScene extends Scene {
 
-export default class TestScene extends Scene {
     constructor() {
         super();
     }
 
-    _init( ) {
-        super._init( );
+    _init() {
+        super._init();
 
+        this.radius = 10;
         this._physics.gravity.set( 0, 0, 0 ); // m/s²
-
-        this.hero = new TestHero( 'testHero' );
-        this.add( this.hero );
+        this.planetGravity = {
+            position: new CANNON.Vec3( 0, 0, 0 ),
+            radius:   this.radius
+        };
 
         //Ground Physics
         var groundShape = new CANNON.Plane();
         var groundBody  = new CANNON.Body( { mass: 0, shape: groundShape } );
         groundBody.quaternion.setFromAxisAngle( new CANNON.Vec3( 1, 0, 0 ), -Math.PI / 2 );
         groundBody.position.set( 0, 0, 0 );
-        //this.physics.addBody( groundBody );
+        this.physics.addBody( groundBody );
 
-        //this.anchor = new CANNON.Body( { mass: 0 } );
-        //this.physics.addBody( this.anchor );
 
-        /*const spring = new CANNON.Spring( this.anchor, this.hero.body, {
-            restLength: 10,
-            stiffness:  100,
-            damping:    1
+        this.hero = new Hero( 'hero', {
+            planetGravity: _.extend( {
+                fly: true
+            }, this.planetGravity )
         } );
+        this.add( this.hero );
 
-        this.physics.addEventListener( "postStep", function ( event ) {
-            spring.applyForce();
-        } );*/
-
-
-        this.radius = 10;
-
-        /*this.domeBody = new CANNON.Body({
-            mass: 0,
-            shape: new CANNON.Sphere(this.radius)
-        });
-        this.physics.addBody(this.domeBody);*/
-
-        //const distance = new CANNON.DistanceConstraint( this.anchor, this.hero.body, 10, 10 );
-        //this.physics.addConstraint( distance );
-
+        for ( var i = 0; i < 100; i++ ) {
+            const bird = new Bird( 'bird' + i, {
+                planetGravity: _.extend( {
+                    fly: true
+                }, this.planetGravity )
+            } );
+            bird.body.position.set(
+                (Math.random() - 0.5) * this.radius * 2,
+                (Math.random() - 0.5) * this.radius * 2,
+                (Math.random() - 0.5) * this.radius * 2
+            );
+            bird.addComponent(new Wander('wander'));
+            this.add(bird);
+        }
 
         if ( __CLIENT__ ) {
             var groundMaterial  = new THREE.MeshBasicMaterial( {
@@ -87,39 +87,34 @@ export default class TestScene extends Scene {
             var pointLightHelper = new THREE.PointLightHelper( pointLight, sphereSize );
             this.stage.add( pointLightHelper );
 
-            this.cameraNull         = new THREE.Object3D();
+            this.cameraNull = new THREE.Object3D();
+            this.cameraNull.position.copy( this.hero.body.position );
+            this.stage.add( this.cameraNull );
+
             this._camera            = new THREE.PerspectiveCamera( 90, 1, 1, 100000 );
-            this._camera.position.z = -5;
+            this._camera.position.y = 1;
+            this._camera.position.z = -2;
+            this._camera.rotation.x = 35 * Math.PI / 180;
             this._camera.rotateY( Math.PI );
             this.cameraNull.add( this._camera );
-            this.stage.add( this.cameraNull );
 
             this.cameraHelper = new THREE.CameraHelper( this._camera );
             this.stage.add( this.cameraHelper );
         }
     }
 
+    //cameraPosition = new THREE.Vector3();
+    cameraRotation = new THREE.Quaternion();
+
     update( dt ) {
         super.update( dt );
 
-
-        // Planet gravity
-        const height = this.hero.body.position.length();
-        if ( Math.abs( height - this.radius ) > 1 ) {
-            const mult = (height > this.radius ? -1 : 1) * 9.82;// * 20;
-            this.hero.body.force.set(
-                mult * this.hero.body.position.x,
-                mult * this.hero.body.position.y,
-                mult * this.hero.body.position.z
-            );
-        }
-
         if ( __CLIENT__ ) {
+            this.cameraNull.position.lerp( this.hero.body.position, dt * 5 );
+            // We have to convert from CANNON.Quaternion here otherwise slerp doesn't work
+            this.cameraRotation.copy( this.hero.body.quaternion );
+            this.cameraNull.quaternion.slerp( this.cameraRotation, dt * 5 );
             this.cameraHelper.update();
-            this.cameraNull.position.copy( this.hero.body.position );
-            this.cameraNull.quaternion.copy( this.hero.body.quaternion );
-            //.setLength( this.hero.position.length() + 10 );
-            //this._camera.lookAt(new THREE.Vector3(0,0,0));
         }
     }
 }

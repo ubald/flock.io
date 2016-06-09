@@ -12,12 +12,23 @@ if ( __CLIENT__ ) {
 export default class Entity extends Id {
 
     /**
+     * Config
+     * @type {{}}
+     * @protected
+     */
+    _config = {};
+    
+    /**
      * Create an entity
      * @param {String} name
+     * @param {Object} [config]
      */
-    constructor( name ) {
+    constructor( name, config = {} ) {
         super( name );
 
+        // Config
+        this._config = config;
+        
         // Physics
         this._body = null;
         
@@ -28,6 +39,14 @@ export default class Entity extends Id {
         this._components = [];
     }
 
+    /**
+     * Config
+     * @returns {{}}
+     */
+    get config() {
+        return this._config;
+    }
+    
     /**
      * Scene
      * @returns {Scene}
@@ -134,7 +153,7 @@ export default class Entity extends Id {
             this._object3D = new THREE.Object3D();
             this._scene.stage.add( this._object3D );
         }
-        this._components.forEach( component => component.init );
+        this._components.forEach( component => component.init() );
     }
 
     /**

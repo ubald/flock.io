@@ -2,6 +2,7 @@
 
 import THREE from "three";
 import "three/examples/js/controls/OrbitControls";
+import {PI_2} from "../lib/math/Math";
 import Renderer from "../lib/engine/Renderer";
 import DomeVertex from "./shaders/DomeVertex.glsl";
 import DomeFragment from "./shaders/DomeFragment.glsl";
@@ -175,9 +176,6 @@ export default class DomeRenderer extends Renderer {
         const domeMap     = new Float32Array( vertices.length );
         const vertexCount = vertices.length;
 
-        // Mapping setup
-        const PI_2 = Math.PI / 2;
-
         /**
          * Dome Sphere radius
          * @type {number}
@@ -288,26 +286,26 @@ export default class DomeRenderer extends Renderer {
             this._renderer.setScissorTest( true );
             this._renderer.render( this._mainView == 'scene' ? this.domeScene : scene.stage, this._debugCameraB );
             /*
-            // Render mini viewer
-            this.renderer.setViewport( 12, 12, 256, 256 );
-            this.renderer.setScissor( 12, 12, 256, 256 );
-            this.renderer.setScissorTest( true );
-            if ( this.swapViewers ) {
-                this.renderer.render( this.domeScene, this.domeCamera );
-            } else {
-                this.renderer.render( scene.stage, this.camera );
-            }
+             // Render mini viewer
+             this.renderer.setViewport( 12, 12, 256, 256 );
+             this.renderer.setScissor( 12, 12, 256, 256 );
+             this.renderer.setScissorTest( true );
+             if ( this.swapViewers ) {
+             this.renderer.render( this.domeScene, this.domeCamera );
+             } else {
+             this.renderer.render( scene.stage, this.camera );
+             }
 
-            if ( scene.camera ) {
-                this.renderer.setViewport( 12 + 256 + 12, 12, 256, 256 );
-                this.renderer.setScissor( 12 + 256 + 12, 12, 256, 256 );
-                this.renderer.setScissorTest( true );
-                if ( this._showDebugCamera ) {
-                    this.renderer.render( scene.stage, scene.camera );
-                } else {
-                    this.renderer.render( scene.stage, this.debugCamera );
-                }
-            }*/
+             if ( scene.camera ) {
+             this.renderer.setViewport( 12 + 256 + 12, 12, 256, 256 );
+             this.renderer.setScissor( 12 + 256 + 12, 12, 256, 256 );
+             this.renderer.setScissorTest( true );
+             if ( this._showDebugCamera ) {
+             this.renderer.render( scene.stage, scene.camera );
+             } else {
+             this.renderer.render( scene.stage, this.debugCamera );
+             }
+             }*/
         }
     }
 

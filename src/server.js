@@ -6,11 +6,18 @@ import socketIo from 'socket.io';
 import preprocess from 'preprocess';
 import path from 'path';
 import World from './lib/engine/World';
-import TestScene from './lib/scenes/TestScene';
+import DomeSkyScene from './lib/scenes/DomeSkyScene';
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
+
+/**
+ * Setup Socket.io
+ */
+io.on( 'connection', function ( socket ) {
+    //console.log(socket);
+} );
 
 /**
  * Start Web Server
@@ -19,11 +26,13 @@ server.listen( 3000, function () {
     console.log( 'Flock.io listening on port 3000!' );
 } );
 
-
 /**
  * Index Page
  */
 app.get( '/', function ( req, res ) {
+    res.set({
+        'Cache-Control': 'no-cache'
+    });
     res.send( preprocess.preprocess( require( './index.html' ) ) );
 } );
 
@@ -32,10 +41,5 @@ app.get( '/', function ( req, res ) {
  */
 app.use( '/', express.static( path.join( path.dirname( __dirname ), 'public' ) ) );
 
-
-io.on( 'connection', function ( socket ) {
-    //console.log(socket);
-} );
-
 const world = new World( 'flock.io' );
-world.scene = new TestScene();
+world.scene = new DomeSkyScene();

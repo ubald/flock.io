@@ -68,13 +68,14 @@ gulp.task( 'backend-watch', function ( done ) {
 gulp.task( 'build', ['frontend-build', 'backend-build'] );
 gulp.task( 'watch', ['frontend-watch', 'backend-watch'] );
 
-gulp.task( 'run', ['backend-watch', 'frontend-watch'], function () {
+gulp.task( 'run', ['watch'], function () {
     nodemon( {
         execMap: {
             js: 'node'
         },
         script:  path.join( __dirname, 'build/server' ),
-        ignore:  ['*']
+        ignore:  ['*'],
+        watch: ['src/server.js', 'src/server/**/*', 'src/lib/**/*']
     } ).on( 'restart', function () {
         gutil.log( "[nodemon]", "Patched!" );
     } );

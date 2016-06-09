@@ -36,6 +36,7 @@
   "dependencies": {
     "babel-runtime": "^6.9.2",
     "express": "^4.13.4",
+    "lodash": "^4.13.1",
     "preprocess": "^3.1.0",
     "socket.io": "^1.4.6"
   }

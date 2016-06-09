@@ -50,6 +50,7 @@ module.exports = {
         new webpack.DefinePlugin( {
             __CLIENT__:    false,
             __SERVER__:    true,
+            __DEV__:       isDev,
             "process.env": {
                 "NODE_ENV": JSON.stringify( isDev ? "development" : "production" )
             }
@@ -57,6 +58,8 @@ module.exports = {
     ],
     module:      {
         loaders: [
+            // Shims
+            { test: /three\/examples/, loader: 'imports?THREE=three' },
             // Loaders
             { test: /\.html/, loader: 'html' },
             {

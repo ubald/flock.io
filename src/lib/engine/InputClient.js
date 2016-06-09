@@ -1,12 +1,12 @@
 "use strict";
 
-import {Subject} from 'rxjs';
+import InputBase from "./input/InputBase";
 
-export default class Input {
+export default class Input extends InputBase {
 
     constructor( world ) {
-        this._world = world;
-
+        super( world );
+        
         // CONTROLLER
         this._haveEvents = 'ongamepadconnected' in window;
 
@@ -19,54 +19,13 @@ export default class Input {
         window.addEventListener( "gamepadconnected", e => this._controllerHandler( e, true ), false );
         window.addEventListener( "gamepaddisconnected", e => this._controllerHandler( e, false ), false );
 
-        this._buttonPressedSubject = new Subject();
-        this._buttonReleasedSubject = new Subject();
-        this._buttonDownSubject = new Subject();
-        this._axesSubject = new Subject();
-
         // KEYBOARD
         window.addEventListener('keydown',e => this._onKeyDown(e),false);
         window.addEventListener('keypress',e => this._onKeyPress(e),false);
         window.addEventListener('keyup',e => this._onKeyUp(e),false);
 
-        this._keyPressSubject = new Subject();
-        this._keyDownSubject = new Subject();
-        this._keyUpSubject = new Subject();
-
         this._keys = {};
         this._lastKeys = {};
-    }
-
-    get controllers() {
-        return this._controllers;
-    }
-
-    get buttonPressed() {
-        return this._buttonPressedSubject;
-    }
-
-    get buttonReleased() {
-        return this._buttonReleasedSubject;
-    }
-
-    get buttonDown() {
-        return this._buttonDownSubject;
-    }
-
-    get axes() {
-        return this._axesSubject;
-    }
-
-    get keyPress() {
-        return this._keyPressSubject;
-    }
-
-    get keyDown() {
-        return this._keyDownSubject;
-    }
-
-    get keyUp() {
-        return this._keyUpSubject;
     }
 
     _detectControllers() {
@@ -108,18 +67,20 @@ export default class Input {
     }
 
     _onKeyDown(e) {
-        this._keys[e.key] = true;
+        this._keys[e.code] = true;
     }
 
     _onKeyPress(e) {
-        this._keys[e.key] = true;
+        this._keys[e.code] = true;
     }
 
     _onKeyUp(e) {
-        this._keys[e.key] = false;
+        this._keys[e.code] = false;
     }
 
     update() {
+        super.update();
+        
         // KEYBOARD
         for ( const key in this._keys ) {
             if ( this._keys[key] ) {
