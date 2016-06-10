@@ -26,19 +26,27 @@ export default class Bird extends Entity {
         super.init();
 
         STLLoader.load( "assets/bird.stl", geometry => {
-            const shape = new CANNON.Sphere( geometry.boundingSphere.radius );
+            if ( !Bird.geometry ) {
+                geometry.scale( 0.25, 0.25, 0.25 );
+                Bird.geometry = geometry;
+            }
+            const shape = new CANNON.Sphere( Bird.geometry.boundingSphere.radius );
             this._body.addShape( shape );
             this._body.mass = shape.volume() * this.density;
             this._body.updateMassProperties();
 
-            if ( __CLIENT__ ) {
-                this.material = new THREE.MeshNormalMaterial( { color: 0xFFC107, side: THREE.DoubleSide } );
-                this.birdMesh = new THREE.Mesh( geometry, this.material );
-                this.addObject( this.birdMesh );
-            }
+            this.createMesh();
             //var normals = new THREE.VertexNormalsHelper( this.birdMesh, 0.2, 0x00ff00, 1 );
             //this.addObject( normals );
         });
+    }
+    
+    createMesh() {
+        if ( __CLIENT__ ) {
+            this.material = new THREE.MeshLambertMaterial( { color: 0xFFC107 } );
+            this.mesh     = new THREE.Mesh( Bird.geometry, this.material );
+            this.addObject( this.mesh );
+        }
     }
 
     update( dt ) {
@@ -46,8 +54,8 @@ export default class Bird extends Entity {
     }
 
     dispose() {
-        this.removeObject( this.birdMesh );
-        this.birdMesh.dispose();
+        this.removeObject( this.mesh );
+        this.mesh.dispose();
         this.material.dispose();
         super.dispose();
     }

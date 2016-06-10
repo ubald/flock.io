@@ -6,25 +6,21 @@ export default class Input extends InputBase {
 
     constructor( world ) {
         super( world );
-        
+
         // CONTROLLER
         this._haveEvents = 'ongamepadconnected' in window;
 
-        this._deadZone = 0.1;
-
-        this._controllers            = {};
-        this._lastControllerState    = {};
         this._detectControllers();
 
         window.addEventListener( "gamepadconnected", e => this._controllerHandler( e, true ), false );
         window.addEventListener( "gamepaddisconnected", e => this._controllerHandler( e, false ), false );
 
         // KEYBOARD
-        window.addEventListener('keydown',e => this._onKeyDown(e),false);
-        window.addEventListener('keypress',e => this._onKeyPress(e),false);
-        window.addEventListener('keyup',e => this._onKeyUp(e),false);
+        window.addEventListener( 'keydown', e => this._onKeyDown( e ), false );
+        window.addEventListener( 'keypress', e => this._onKeyPress( e ), false );
+        window.addEventListener( 'keyup', e => this._onKeyUp( e ), false );
 
-        this._keys = {};
+        this._keys     = {};
         this._lastKeys = {};
     }
 
@@ -42,10 +38,11 @@ export default class Input extends InputBase {
     }
 
     _addController( controller ) {
-        this._controllers[controller.index]            = controller;
-        this._lastControllerState[controller.index]    = {
-            buttons: {},
-            axes:    {}
+        console.log(controller);
+        this._controllers[controller.index]         = controller;
+        this._lastControllerState[controller.index] = {
+            buttons: [],
+            axes:    []
         };
     }
 
@@ -66,21 +63,21 @@ export default class Input extends InputBase {
         }
     }
 
-    _onKeyDown(e) {
+    _onKeyDown( e ) {
         this._keys[e.code] = true;
     }
 
-    _onKeyPress(e) {
+    _onKeyPress( e ) {
         this._keys[e.code] = true;
     }
 
-    _onKeyUp(e) {
+    _onKeyUp( e ) {
         this._keys[e.code] = false;
     }
 
     update() {
         super.update();
-        
+
         // KEYBOARD
         for ( const key in this._keys ) {
             if ( this._keys[key] ) {
@@ -134,12 +131,12 @@ export default class Input extends InputBase {
                 }
 
                 for ( var k = 0; k < controller.axes.length; k++ ) {
-                    var axis     = controller.axes[k];
+                    var axis     = controller.axes[k] || 0.0;
                     var lastAxis = lastState.axes[k] || 0.0;
 
                     // Deadzone
                     if ( axis <= this._deadZone && axis >= -this._deadZone ) {
-                        continue;
+                        axis = 0.0;
                     }
 
                     //if ( axis != lastAxis ) {
@@ -151,7 +148,12 @@ export default class Input extends InputBase {
 
                     lastState.axes[k] = axis;
                 }
+
+                //console.log(lastState);
+                this._lastControllerState[i] = lastState
             }
+
+            this._world.io.emit( 0x02, this._lastControllerState );
         }
     }
 

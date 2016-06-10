@@ -164,8 +164,10 @@ export default class Scene extends Id {
         // Entities update
         this._entities.forEach( entity => entity.update( dt ) );
 
-        // Physics Update
-        this._physics.step( this.fixedTimeStep, dt, this.maxSubSteps );
+        if (__SERVER__) {
+            // Physics Update
+            this._physics.step( this.fixedTimeStep, dt, this.maxSubSteps );
+        }
     }
 
     /*buttonPressed(controller, button, value) {

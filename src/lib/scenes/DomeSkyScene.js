@@ -6,7 +6,7 @@ import CANNON from "cannon";
 import Scene from "../engine/Scene";
 import Bird from "../entities/Bird";
 import Hero from "../entities/Hero";
-import Wander from "../engine/components/Wander"
+import Wander from "../engine/components/Wander";
 
 export default class DomeSkyScene extends Scene {
 
@@ -28,9 +28,13 @@ export default class DomeSkyScene extends Scene {
         var groundShape = new CANNON.Plane();
         var groundBody  = new CANNON.Body( { mass: 0, shape: groundShape } );
         groundBody.quaternion.setFromAxisAngle( new CANNON.Vec3( 1, 0, 0 ), -Math.PI / 2 );
-        groundBody.position.set( 0, 0, 0 );
+        groundBody.position.set( 0, -5, 0 );
         this.physics.addBody( groundBody );
 
+        var domeShape = new CANNON.Sphere( this.radius - 1 );
+        var domeBody  = new CANNON.Body( { mass: 0, shape: domeShape } );
+        domeBody.position.set( 0, 0, 0 );
+        this.physics.addBody( domeBody );
 
         this.hero = new Hero( 'hero', {
             planetGravity: _.extend( {
@@ -39,7 +43,7 @@ export default class DomeSkyScene extends Scene {
         } );
         this.add( this.hero );
 
-        for ( var i = 0; i < 100; i++ ) {
+        for ( var i = 0; i < 250; i++ ) {
             const bird = new Bird( 'bird' + i, {
                 planetGravity: _.extend( {
                     fly: true
@@ -50,15 +54,15 @@ export default class DomeSkyScene extends Scene {
                 (Math.random() - 0.5) * this.radius * 2,
                 (Math.random() - 0.5) * this.radius * 2
             );
-            bird.addComponent(new Wander('wander'));
-            this.add(bird);
+            if ( __SERVER__ ) {
+                bird.addComponent( new Wander( 'wander' ) );
+            }
+            this.add( bird );
         }
 
         if ( __CLIENT__ ) {
-            var groundMaterial  = new THREE.MeshBasicMaterial( {
-                color:     0x003300,
-                wireframe: true,
-                side:      THREE.DoubleSide
+            var groundMaterial  = new THREE.MeshLambertMaterial( {
+                color:     0xe8d7a5
             } );
             var ground_geometry = new THREE.PlaneGeometry( 10000, 10000, 100, 100 );
             var ground          = new THREE.Mesh( ground_geometry, groundMaterial );
@@ -69,31 +73,42 @@ export default class DomeSkyScene extends Scene {
             ground.position.copy( groundBody.position );
 
             // Dome Preview
-            this.domeMaterial = new THREE.MeshBasicMaterial( {
+            this.domeMaterial = new THREE.MeshLambertMaterial( {
                 color:     0x303030,
-                wireframe: true,
-                side:      THREE.DoubleSide
+                //wireframe: true,
+                //side:      THREE.DoubleSide
             } );
-            this.domeGeometry = new THREE.SphereGeometry( this.radius, 16, 16 );
+            this.domeGeometry = new THREE.SphereGeometry( this.radius - 1, 64, 64 );
             this.domeMesh     = new THREE.Mesh( this.domeGeometry, this.domeMaterial );
             this.domeMesh.position.set( 0, 0, 0 );
             this.stage.add( this.domeMesh );
 
-            var pointLight = new THREE.PointLight( 0xffffff, 1, 100 );
-            pointLight.position.set( 0, this.radius + 5, 0 );
-            this.stage.add( pointLight );
+            // Top Light
+            var topPointLight = new THREE.PointLight( 0xffffff, 1, 100 );
+            topPointLight.position.set( 0, this.radius + 5, 0 );
+            this.stage.add( topPointLight );
+            this.stage.add( new THREE.PointLightHelper( topPointLight, 1 ) );
 
-            var sphereSize       = 1;
-            var pointLightHelper = new THREE.PointLightHelper( pointLight, sphereSize );
-            this.stage.add( pointLightHelper );
+            // Bottom Light
+            var bottomPointLight = new THREE.PointLight( 0xffffff, 1, 100 );
+            bottomPointLight.position.set( 0, -5, 0 );
+            this.stage.add( bottomPointLight );
+            this.stage.add( new THREE.PointLightHelper( bottomPointLight, 1 ) );
 
+            var hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.6 );
+            hemiLight.color.setHSL( 0.6, 1, 0.6 );
+            hemiLight.groundColor.setHSL( 0.095, 1, 0.75 );
+            hemiLight.position.set( 0, 100, 0 );
+            this.stage.add( hemiLight );
+
+            // CAMERA RIG
             this.cameraNull = new THREE.Object3D();
             this.cameraNull.position.copy( this.hero.body.position );
             this.stage.add( this.cameraNull );
 
-            this._camera            = new THREE.PerspectiveCamera( 90, 1, 1, 100000 );
-            this._camera.position.y = 1;
-            this._camera.position.z = -2;
+            this._camera            = new THREE.PerspectiveCamera( 90, 1, 0.01, 100000 );
+            this._camera.position.y = 0.5;
+            this._camera.position.z = -0.5;
             this._camera.rotation.x = 35 * Math.PI / 180;
             this._camera.rotateY( Math.PI );
             this.cameraNull.add( this._camera );
@@ -110,7 +125,7 @@ export default class DomeSkyScene extends Scene {
         super.update( dt );
 
         if ( __CLIENT__ ) {
-            this.cameraNull.position.lerp( this.hero.body.position, dt * 5 );
+            this.cameraNull.position.lerp( this.hero.body.position, dt * 10 );
             // We have to convert from CANNON.Quaternion here otherwise slerp doesn't work
             this.cameraRotation.copy( this.hero.body.quaternion );
             this.cameraNull.quaternion.slerp( this.cameraRotation, dt * 5 );

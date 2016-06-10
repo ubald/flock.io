@@ -1,16 +1,16 @@
 'use strict';
 
-import express from 'express';
-import http from 'http';
-import socketIo from 'socket.io';
-import preprocess from 'preprocess';
-import path from 'path';
-import World from './lib/engine/World';
-import DomeSkyScene from './lib/scenes/DomeSkyScene';
+import express from "express";
+import http from "http";
+import socketIo from "socket.io";
+import preprocess from "preprocess";
+import path from "path";
+import World from "./lib/engine/World";
+import DomeSkyScene from "./lib/scenes/DomeSkyScene";
 
-const app = express();
-const server = http.createServer(app);
-const io = socketIo(server);
+const app    = express();
+const server = http.createServer( app );
+const io     = socketIo( server );
 
 /**
  * Setup Socket.io
@@ -30,9 +30,9 @@ server.listen( 3000, function () {
  * Index Page
  */
 app.get( '/', function ( req, res ) {
-    res.set({
+    res.set( {
         'Cache-Control': 'no-cache'
-    });
+    } );
     res.send( preprocess.preprocess( require( './index.html' ) ) );
 } );
 
@@ -41,5 +41,5 @@ app.get( '/', function ( req, res ) {
  */
 app.use( '/', express.static( path.join( path.dirname( __dirname ), 'public' ) ) );
 
-const world = new World( 'flock.io' );
+const world = new World( 'flock.io', { io } );
 world.scene = new DomeSkyScene();

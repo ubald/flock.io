@@ -7,6 +7,7 @@ export default class FlightControls extends Component {
     
     constructor( name, config ) {
         super( name, config );
+        this.alpha = config.alpha || 1.0;
     }
 
     init() {
@@ -49,7 +50,7 @@ export default class FlightControls extends Component {
 
             case 1:
                 //this.position.y += axis.value;
-                this.entity.body.applyLocalForce( new CANNON.Vec3( 0, 0, axis.value * -30 ), new CANNON.Vec3( 0, 0, 0 ) );
+                this.entity.body.applyLocalForce( new CANNON.Vec3( 0, 0, axis.value * this.alpha * -5 ), new CANNON.Vec3( 0, 0, 0 ) );
                 break;
 
             case 2:
@@ -82,11 +83,11 @@ export default class FlightControls extends Component {
     }
 
     _keyboardThrustForwards() {
-        this.entity.body.applyLocalForce( new CANNON.Vec3( 0, 0, 30 ), new CANNON.Vec3( 0, 0, 0 ) );
+        this.entity.body.applyLocalForce( new CANNON.Vec3( 0, 0, this.alpha * -5 ), new CANNON.Vec3( 0, 0, 0 ) );
     }
 
     _keyboardThrustBackwards() {
-        this.entity.body.applyLocalForce( new CANNON.Vec3( 0, 0, 30 ), new CANNON.Vec3( 0, 0, 0 ) );
+        this.entity.body.applyLocalForce( new CANNON.Vec3( 0, 0, this.alpha * 5 ), new CANNON.Vec3( 0, 0, 0 ) );
     }
 
     _keyboardBankLeft() {

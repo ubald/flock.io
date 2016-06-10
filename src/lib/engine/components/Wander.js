@@ -8,8 +8,8 @@ export default class Wander extends Component {
     wanderTheta    = 0.0;
     wanderPhi      = 0.0;
     wanderPsi      = 0.0;
-    wanderRadius   = 6.0;
-    wanderDistance = 10.0;
+    wanderRadius   = 1.0;
+    wanderDistance = 2.5;
     wanderStep     = 0.25;
     velocity       = new CANNON.Vec3();
     offset         = new CANNON.Vec3();

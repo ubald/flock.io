@@ -7,6 +7,10 @@ export default class InputBase {
     constructor( world ) {
         this._world = world;
 
+        this._deadZone = 0.1;
+        this._controllers         = {};
+        this._lastControllerState = {};
+
         this._buttonPressedSubject  = new Subject();
         this._buttonReleasedSubject = new Subject();
         this._buttonDownSubject     = new Subject();

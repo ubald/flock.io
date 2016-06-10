@@ -1,11 +1,12 @@
 'use strict';
 
 import Id from "./Id";
+import CANNON from "cannon";
 
 if ( __CLIENT__ ) {
-    var Input = require("./InputClient").default;
+    var Input = require( "./InputClient" ).default;
 } else {
-    var Input = require("./InputServer").default;
+    var Input = require( "./InputServer" ).default;
 }
 
 /**
@@ -28,6 +29,17 @@ export default class World extends Id {
         // Options
         this.options = options;
 
+        // Network
+        this.io = options.io;
+
+        if ( __SERVER__ ) {
+            this.io.on( 'connection', socket => {
+                socket.on( 0x02, state => {
+                    this._input._controllers = state
+                } );
+            } )
+        }
+
         // Renderer
         this.renderer = options.renderer;
 
@@ -37,6 +49,22 @@ export default class World extends Id {
         // Loop parameters
         this.fps        = 60.0;
         this.tickLength = 1e3 / this.fps;
+
+        if ( __CLIENT__ ) {
+            this.io.on( 0x01, state => {
+                const bodies    = this._scene.physics.bodies;
+                const bodyCount = this._scene.physics.numObjects();
+                const DYNAMIC   = CANNON.Body.DYNAMIC;
+                for ( let i = 0; i !== bodyCount; i++ ) {
+                    const bi = bodies[i];
+                    const s  = state[bi.id];
+                    if ( bi.type & DYNAMIC && s ) { // Only for dynamic bodies
+                        bi.position.set( s.p[0] / 100, s.p[1] / 100, s.p[2] / 100 );
+                        bi.quaternion.set( s.o[0] / 100, s.o[1] / 100, s.o[2] / 100, s.o[3] / 100 );
+                    }
+                }
+            } );
+        }
 
         // Loop
         if ( 'undefined' != typeof requestAnimationFrame ) {
@@ -149,6 +177,24 @@ export default class World extends Id {
 
                 // Scene Update
                 this._scene.update( dt );
+
+                if ( __SERVER__ ) {
+                    const bodies    = this._scene.physics.bodies;
+                    const bodyCount = this._scene.physics.numObjects();
+                    const DYNAMIC   = CANNON.Body.DYNAMIC;
+                    const io        = this.options.io;
+                    let state       = {};
+                    for ( let i = 0; i !== bodyCount; i++ ) {
+                        const bi = bodies[i];
+                        if ( bi.type & DYNAMIC ) { // Only for dynamic bodies
+                            state[bi.id] = {
+                                p: bi.position.toArray().map( a => (a * 100).toFixed( 2 ) ),
+                                o: bi.quaternion.toArray().map( a => (a * 100).toFixed( 2 ) )
+                            }
+                        }
+                    }
+                    io.emit( 0x01, state )
+                }
 
                 // Renderer
                 if ( this.renderer ) {
