@@ -27,7 +27,10 @@
 <script src="/client.js" defer></script>
 <!-- @endif -->
 <!-- @if process.env.NODE_ENV='development' -->
-<script src="//localhost:3001/client.js"></script>
+<script>
+    // Must load dynamically in dev to retrieve host and change port number to match webpack-dev-server
+    document.writeln("<"+"script type='text/javascript' src='//" + window.location.hostname + ":3001/client.js'><"+"/script>");
+</script>
 <!-- @endif -->
 </body>
 </html>

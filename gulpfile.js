@@ -36,7 +36,7 @@ gulp.task( 'frontend-watch', function () {
         stats:       {
             colors: true
         }
-    } ).listen( 3001, 'localhost', function ( err, result ) {
+    } ).listen( 3001, '0.0.0.0', function ( err, result ) {
         if ( err ) {
             throw new gutil.PluginError( "webpack-dev-server", err );
         }
