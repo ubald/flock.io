@@ -1,5 +1,5 @@
 var webpack = require( 'webpack' );
-var localIP = require( '../src/lib/utils/NetworkUtils' ).getLocalIp();
+var localIP = require( '../src/engine/utils/NetworkUtils' ).getLocalIp();
 
 var config = require( './webpack.config.client' );
 

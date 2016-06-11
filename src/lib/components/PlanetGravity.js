@@ -3,8 +3,8 @@
 import _ from "lodash";
 import THREE from "three";
 import CANNON from "cannon";
-import {PI_2} from "../math/Math";
-import Component from "../engine/Component";
+import {PI_2} from "../../engine/math/Math";
+import Component from "../../engine/Component";
 
 export default class PlanetGravity extends Component {
 
@@ -38,8 +38,17 @@ export default class PlanetGravity extends Component {
         
         // SURFACE ALIGNMENT
         this.entity.body.pointToLocalFrame( this._config.position, this.localCenter );
-        const pitch = this.front.angleTo( this.localCenter ) - PI_2;
-        const roll  = this.side.angleTo( this.localCenter ) - PI_2;
+        let pitch = this.front.angleTo( this.localCenter ) - PI_2;
+        let roll  = this.side.angleTo( this.localCenter ) - PI_2;
+
+        // Protection for when the player is dead-center, thus having no angle at all
+        if ( isNaN( pitch ) ) {
+            pitch = 0.00;
+        }
+        if ( isNaN( roll ) ) {
+            roll = 0.00;
+        }
+
         this.attitude.set( pitch * 0.25, roll * 0.05 /*Bank rotation*/, roll * 0.05 );
         this.entity.body.vectorToWorldFrame( this.attitude, this.attitude );
         this.entity.body.angularVelocity.vadd( this.attitude, this.entity.body.angularVelocity );

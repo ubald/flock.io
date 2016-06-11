@@ -1,18 +1,18 @@
 "use strict";
 
-import InputBase from "./input/InputBase";
+import InputBase from "./InputBase";
 
 export default class Input extends InputBase {
 
     _controllers = [];
 
-    constructor( world ) {
-        super( world );
+    constructor( game ) {
+        super( game );
     }
 
     update() {
         super.update();
-
+        
         // KEYBOARD
         /*for ( const key in this._keys ) {
          if ( this._keys[key] ) {
@@ -66,7 +66,7 @@ export default class Input extends InputBase {
                 lastButtonState.pressed = button.pressed;
                 lastButtonState.value   = button.value;
             }
-
+            
             for ( var k = 0; k < controller.axes.length; k++ ) {
                 var axis     = controller.axes[k] || 0.0;
                 var lastAxis = lastState.axes[k] || 0.0;

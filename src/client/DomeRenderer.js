@@ -2,8 +2,8 @@
 
 import THREE from "three";
 import "three/examples/js/controls/OrbitControls";
-import {PI_2} from "../lib/math/Math";
-import Renderer from "../lib/engine/Renderer";
+import {PI_2} from "../engine/math/Math";
+import Renderer from "../engine/Renderer";
 import DomeVertex from "./shaders/DomeVertex.glsl";
 import DomeFragment from "./shaders/DomeFragment.glsl";
 

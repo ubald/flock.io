@@ -1,7 +1,7 @@
 "use strict";
 
 /**
- * World Renderer
+ * Game Renderer
  */
 export default class Renderer {
 
@@ -34,7 +34,7 @@ export default class Renderer {
     _height = 1;
 
     /**
-     * Create a world renderer
+     * Create a game renderer
      * @param {THREE.WebGLRenderer} renderer
      */
     constructor( renderer ) {
@@ -74,7 +74,7 @@ export default class Renderer {
     }
 
     /**
-     * Render the world
+     * Render the game
      * 
      * @param {Scene} scene
      */

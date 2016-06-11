@@ -1,42 +1,43 @@
 "use strict";
 
 import CANNON from "cannon";
-import Component from "../engine/Component";
+import Component from "../../engine/Component";
 
 export default class FlightControls extends Component {
     
     constructor( name, config ) {
         super( name, config );
         this.alpha = config.alpha || 1.0;
+        this.input = config.input;
     }
 
     init() {
         super.init();
 
         this.subscriptions = [
-            this.entity.scene.world.input.axes
+            this.input.axes
                 .subscribe( this._controllerControl.bind( this ) ),
 
-            this.entity.scene.world.input.keyPress
+            this.input.keyPress
                 .filter( ( { key } ) => key == 'KeyW' || key == 'ArrowUp' )
                 .subscribe( this._keyboardThrustForwards.bind( this ) ),
 
-            this.entity.scene.world.input.keyPress
+            this.input.keyPress
                 .filter( ( { key } ) => key == 'KeyS' || key == 'ArrowDown' )
                 .subscribe( this._keyboardThrustBackwards.bind( this ) ),
 
-            this.entity.scene.world.input.keyPress
+            this.input.keyPress
                 .filter( ( { key } ) => key == 'KeyA' || key == 'ArrowLeft' )
                 .subscribe( this._keyboardBankLeft.bind( this ) ),
 
-            this.entity.scene.world.input.keyPress
+            this.input.keyPress
                 .filter( ( { key } ) => key == 'KeyD' || key == 'ArrowRight' )
                 .subscribe( this._keyboardBankRight.bind( this ) )
         ];
     }
 
     dispose() {
-        this.subscriptions.forEach( subscription => subscription.dispose() );
+        this.subscriptions.forEach( subscription => subscription.unsubscribe() );
         super.dispose();
     }
 

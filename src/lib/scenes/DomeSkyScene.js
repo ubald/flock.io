@@ -1,12 +1,14 @@
 "use strict";
 
-import _ from "lodash";
 import THREE from "three";
 import CANNON from "cannon";
-import Scene from "../engine/Scene";
+import Scene from "../../engine/Scene";
+import Ground from "./domeSky/Ground";
+import Planet from "./domeSky/Planet";
 import Bird from "../entities/Bird";
 import Hero from "../entities/Hero";
-import Wander from "../engine/components/Wander";
+import PlayerBird from "../entities/PlayerBird";
+import Wander from "../../engine/components/Wander";
 
 export default class DomeSkyScene extends Scene {
 
@@ -14,40 +16,31 @@ export default class DomeSkyScene extends Scene {
         super();
     }
 
+    /**
+     * @inheritdoc
+     */
     _init() {
         super._init();
 
         this.radius = 10;
         this._physics.gravity.set( 0, 0, 0 ); // m/s²
+
+        // Defaults for planet gravity
         this.planetGravity = {
             position: new CANNON.Vec3( 0, 0, 0 ),
             radius:   this.radius
         };
 
-        //Ground Physics
-        var groundShape = new CANNON.Plane();
-        var groundBody  = new CANNON.Body( { mass: 0, shape: groundShape } );
-        groundBody.quaternion.setFromAxisAngle( new CANNON.Vec3( 1, 0, 0 ), -Math.PI / 2 );
-        groundBody.position.set( 0, -5, 0 );
-        this.physics.addBody( groundBody );
+        // Ground
+        this.add( new Ground('ground') );
+        
+        // Planet
+        this.add( new Planet('planet', { radius: this.radius}));
 
-        var domeShape = new CANNON.Sphere( this.radius - 1 );
-        var domeBody  = new CANNON.Body( { mass: 0, shape: domeShape } );
-        domeBody.position.set( 0, 0, 0 );
-        this.physics.addBody( domeBody );
-
-        this.hero = new Hero( 'hero', {
-            planetGravity: _.extend( {
-                fly: true
-            }, this.planetGravity )
-        } );
-        this.add( this.hero );
-
+        // Birds
         for ( var i = 0; i < 250; i++ ) {
             const bird = new Bird( 'bird' + i, {
-                planetGravity: _.extend( {
-                    fly: true
-                }, this.planetGravity )
+                planetGravity: this.planetGravity
             } );
             bird.body.position.set(
                 (Math.random() - 0.5) * this.radius * 2,
@@ -61,28 +54,7 @@ export default class DomeSkyScene extends Scene {
         }
 
         if ( __CLIENT__ ) {
-            var groundMaterial  = new THREE.MeshLambertMaterial( {
-                color:     0xe8d7a5
-            } );
-            var ground_geometry = new THREE.PlaneGeometry( 10000, 10000, 100, 100 );
-            var ground          = new THREE.Mesh( ground_geometry, groundMaterial );
-            this.stage.add( ground );
-
-            //Ground Preview
-            ground.quaternion.copy( groundBody.quaternion );
-            ground.position.copy( groundBody.position );
-
-            // Dome Preview
-            this.domeMaterial = new THREE.MeshLambertMaterial( {
-                color:     0x303030,
-                //wireframe: true,
-                //side:      THREE.DoubleSide
-            } );
-            this.domeGeometry = new THREE.SphereGeometry( this.radius - 1, 64, 64 );
-            this.domeMesh     = new THREE.Mesh( this.domeGeometry, this.domeMaterial );
-            this.domeMesh.position.set( 0, 0, 0 );
-            this.stage.add( this.domeMesh );
-
+            
             // Top Light
             var topPointLight = new THREE.PointLight( 0xffffff, 1, 100 );
             topPointLight.position.set( 0, this.radius + 5, 0 );
@@ -101,9 +73,15 @@ export default class DomeSkyScene extends Scene {
             hemiLight.position.set( 0, 100, 0 );
             this.stage.add( hemiLight );
 
+            // HERO
+            /*this.hero = new Hero( 'hero', {
+                planetGravity: this.planetGravity
+            } );
+            this.add( this.hero );*/
+
             // CAMERA RIG
             this.cameraNull = new THREE.Object3D();
-            this.cameraNull.position.copy( this.hero.body.position );
+            //this.cameraNull.position.copy( this.hero.body.position );
             this.stage.add( this.cameraNull );
 
             this._camera            = new THREE.PerspectiveCamera( 90, 1, 0.01, 100000 );
@@ -118,18 +96,57 @@ export default class DomeSkyScene extends Scene {
         }
     }
 
-    //cameraPosition = new THREE.Vector3();
+    /**
+     * @inheritdoc
+     */
+    addPlayer( player ) {
+        const clazz = player.hero ? Hero : PlayerBird;
+        const entity = new clazz( `player-${player.id}`, {
+            player:        player,
+            planetGravity: this.planetGravity
+        } );
+        this.add( entity );
+        if ( player.hero ) {
+            this.hero = entity;
+        }
+    }
+
+    /**
+     * @inheritdoc
+     */
+    removePlayer( player ) {
+        const entity = this.get(`player-${player.id}`);
+        if ( entity ) {
+            if ( player.hero ) {
+                this.hero = null;
+            }
+            this.remove( entity );
+        } else {
+            console.warn(`Could not find player entity ${player.id} for removal`)
+        }
+    }
+
+    /**
+     * Temporary
+     * quaternion use to compute slerp for camera rotation
+     * @type {THREE.Quaternion}
+     */
     cameraRotation = new THREE.Quaternion();
 
+    /**
+     * @inheritdoc
+     */
     update( dt ) {
         super.update( dt );
 
         if ( __CLIENT__ ) {
-            this.cameraNull.position.lerp( this.hero.body.position, dt * 10 );
-            // We have to convert from CANNON.Quaternion here otherwise slerp doesn't work
-            this.cameraRotation.copy( this.hero.body.quaternion );
-            this.cameraNull.quaternion.slerp( this.cameraRotation, dt * 5 );
-            this.cameraHelper.update();
+            if ( this.hero ) {
+                this.cameraNull.position.lerp( this.hero.body.position, dt * 10 );
+                // We have to convert from CANNON.Quaternion here otherwise slerp doesn't work
+                this.cameraRotation.copy( this.hero.body.quaternion );
+                this.cameraNull.quaternion.slerp( this.cameraRotation, dt * 5 );
+                this.cameraHelper.update();
+            }
         }
     }
 }

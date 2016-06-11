@@ -1,10 +1,10 @@
 'use strict';
-
+import _ from "lodash";
 import THREE from "three";
 import CANNON from "cannon";
-import Entity from "../engine/Entity";
+import Entity from "../../engine/Entity";
 import PlanetGravity from "../components/PlanetGravity";
-import STLLoader from "../loaders/STLLoader";
+import STLLoader from "../../engine/loaders/STLLoader";
 
 export default class Bird extends Entity {
 
@@ -18,8 +18,17 @@ export default class Bird extends Entity {
             angularDamping: 0.9,
             type:           CANNON.Body.DYNAMIC
         } );
+        
+        this._body.position.set( 0, 10, 0 );
 
-        this.addComponent( new PlanetGravity( 'gravity', this.config.planetGravity ) );
+        if (__SERVER__) {
+            this.addComponent( new PlanetGravity(
+                'gravity',
+                _.extend( {
+                    fly: true
+                }, this.config.planetGravity )
+            ) );
+        }
     }
 
     init() {
@@ -30,23 +39,24 @@ export default class Bird extends Entity {
                 geometry.scale( 0.25, 0.25, 0.25 );
                 Bird.geometry = geometry;
             }
+
             const shape = new CANNON.Sphere( Bird.geometry.boundingSphere.radius );
             this._body.addShape( shape );
             this._body.mass = shape.volume() * this.density;
             this._body.updateMassProperties();
 
-            this.createMesh();
+            if (__CLIENT__) {
+                this.createMesh();
+            }
             //var normals = new THREE.VertexNormalsHelper( this.birdMesh, 0.2, 0x00ff00, 1 );
             //this.addObject( normals );
-        });
+        } );
     }
-    
+
     createMesh() {
-        if ( __CLIENT__ ) {
-            this.material = new THREE.MeshLambertMaterial( { color: 0xFFC107 } );
-            this.mesh     = new THREE.Mesh( Bird.geometry, this.material );
-            this.addObject( this.mesh );
-        }
+        this.material = new THREE.MeshLambertMaterial( { color: 0xFFC107 } );
+        this.mesh     = new THREE.Mesh( Bird.geometry, this.material );
+        this.addObject( this.mesh );
     }
 
     update( dt ) {
@@ -54,11 +64,10 @@ export default class Bird extends Entity {
     }
 
     dispose() {
-        this.removeObject( this.mesh );
-        this.mesh.dispose();
-        this.material.dispose();
+        if ( __CLIENT__ ) {
+            this.removeObject( this.mesh );
+            this.material.dispose();
+        }
         super.dispose();
     }
-
-
 }

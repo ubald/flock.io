@@ -28,10 +28,10 @@ export default class Entity extends Id {
 
         // Config
         this._config = config;
-        
+
         // Physics
         this._body = null;
-        
+
         // Object 3D
         this._object3D = null;
 
@@ -46,7 +46,7 @@ export default class Entity extends Id {
     get config() {
         return this._config;
     }
-    
+
     /**
      * Scene
      * @returns {Scene}
@@ -86,7 +86,7 @@ export default class Entity extends Id {
     get components() {
         return this._components;
     }
-    
+
     /*get position() {
         return this._body ? this._body.position : this._object3D.position;
     }
@@ -146,13 +146,17 @@ export default class Entity extends Id {
     }
 
     init() {
-        if ( this.body ) {
-            this._scene.physics.addBody(this.body);
+        if ( this._body ) {
+            this._body.__id = this._name;
+            this._scene.physics.addBody(this._body);
+            
         }
+
         if ( __CLIENT__ ) {
             this._object3D = new THREE.Object3D();
             this._scene.stage.add( this._object3D );
         }
+        
         this._components.forEach( component => component.init() );
     }
 
@@ -180,7 +184,12 @@ export default class Entity extends Id {
             this._scene.physics.removeBody(this.body);
         }
         this._components.forEach( components => components.dispose() );
-        this._scene.stage.remove( this._object3D );
-        this._object3D = null;
+
+        if (__CLIENT__) {
+            this._scene.stage.remove( this._object3D );
+            this._object3D = null;
+        }
+
+        this._scene = null;
     }
 }

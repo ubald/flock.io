@@ -1,11 +1,12 @@
 "use strict";
 
-import InputBase from "./input/InputBase";
+import InputBase from "./InputBase";
+import Messages from "../network/Messages";
 
 export default class Input extends InputBase {
 
-    constructor( world ) {
-        super( world );
+    constructor( game ) {
+        super( game );
 
         // CONTROLLER
         this._haveEvents = 'ongamepadconnected' in window;
@@ -38,7 +39,6 @@ export default class Input extends InputBase {
     }
 
     _addController( controller ) {
-        console.log(controller);
         this._controllers[controller.index]         = controller;
         this._lastControllerState[controller.index] = {
             buttons: [],
@@ -145,7 +145,7 @@ export default class Input extends InputBase {
                     //console.log({ controller, id: k, value: axis });
                     this._axesSubject.next( { controller, id: k, value: axis } );
                     //}
-
+                    
                     lastState.axes[k] = axis;
                 }
 
@@ -153,7 +153,7 @@ export default class Input extends InputBase {
                 this._lastControllerState[i] = lastState
             }
 
-            this._world.io.emit( 0x02, this._lastControllerState );
+            //this._game.client.socket.emit( Messages.CONTROLS, this._lastControllerState );
         }
     }
 

@@ -1,11 +1,10 @@
 "use strict";
 
 import "./client.less";
-import io from "socket.io-client";
 import Stats from "stats.js";
 import {GUI} from "dat.gui";
-import World from "./lib/engine/World";
-import DomeSkyScene from "./lib/scenes/DomeSkyScene";
+
+import FlockIo from "./lib/FlockIo";
 import DomeRenderer from "./client/DomeRenderer";
 
 function main() {
@@ -14,38 +13,33 @@ function main() {
     stats.showPanel( 0 );
     document.body.appendChild( stats.dom );
 
-    // SOCKET.IO
-    const socket = io.connect();
+    // GAME
+    const game = new FlockIo();
+    const renderer = new DomeRenderer();
+    game.renderer = renderer;
+    game.beforeUpdate = () => stats.begin();
+    game.afterUpdate = () => stats.end();
+    game.initialize();
 
-    // WORLD
-    const world = new World( 'flock.io', {
-        io: socket,
-        renderer:     new DomeRenderer(),
-        beforeUpdate: () => stats.begin(),
-        afterUpdate:  () => stats.end()
-    } );
-    document.body.appendChild( world.renderer.renderer.domElement );
+    document.body.appendChild( renderer.renderer.domElement );
     function onWindowResize() {
-        world.setSize( window.innerWidth, window.innerHeight );
+        renderer.setSize( window.innerWidth, window.innerHeight );
     }
 
     window.addEventListener( 'resize', onWindowResize, false );
     onWindowResize();
 
-    // SCENE
-    world.scene = new DomeSkyScene();
-
     // DAT.GUI
     const gui           = new GUI();
-    //gui.remember( world.renderer );
+    //gui.remember( renderer );
     var domeRendererGUI = gui.addFolder( 'Dome Renderer' );
     domeRendererGUI.open();
-    domeRendererGUI.add( world.renderer, 'domeAngle', 230, 270, 1 );
-    domeRendererGUI.add( world.renderer, 'showGrid' );
-    domeRendererGUI.add( world.renderer, 'gridResolution', 8, 128, 1 );
-    domeRendererGUI.add( world.renderer, 'mapResolution', [128, 256, 512, 1024, 2048, 4096] );
-    domeRendererGUI.add( world.renderer, 'mainView', world.renderer.availableViews );
-    domeRendererGUI.add( world.renderer, 'showDebugViews' );
+    domeRendererGUI.add( renderer, 'domeAngle', 230, 270, 1 );
+    domeRendererGUI.add( renderer, 'showGrid' );
+    domeRendererGUI.add( renderer, 'gridResolution', 8, 128, 1 );
+    domeRendererGUI.add( renderer, 'mapResolution', [128, 256, 512, 1024, 2048, 4096] );
+    domeRendererGUI.add( renderer, 'mainView', renderer.availableViews );
+    domeRendererGUI.add( renderer, 'showDebugViews' );
 }
 
 if ( __DEV__ ) {

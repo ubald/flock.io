@@ -2,22 +2,12 @@
 
 import express from "express";
 import http from "http";
-import socketIo from "socket.io";
 import preprocess from "preprocess";
 import path from "path";
-import World from "./lib/engine/World";
-import DomeSkyScene from "./lib/scenes/DomeSkyScene";
+import FlockIo from "./lib/FlockIo";
 
 const app    = express();
 const server = http.createServer( app );
-const io     = socketIo( server );
-
-/**
- * Setup Socket.io
- */
-io.on( 'connection', function ( socket ) {
-    //console.log(socket);
-} );
 
 /**
  * Start Web Server
@@ -41,5 +31,5 @@ app.get( '/', function ( req, res ) {
  */
 app.use( '/', express.static( path.join( path.dirname( __dirname ), 'public' ) ) );
 
-const world = new World( 'flock.io', { io } );
-world.scene = new DomeSkyScene();
+const game = new FlockIo();
+game.initialize();
