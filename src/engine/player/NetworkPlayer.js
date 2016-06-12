@@ -58,7 +58,6 @@ export default class NetworkPlayer extends Player {
         // Send current players to client
         for ( var id in this._game.players ) {
             if ( id != this._id ) {
-                console.log('add', id, 'to', this._id);
                 this.send( { m: Messages.PLAYER_ADDED, id } );
             }
         }
