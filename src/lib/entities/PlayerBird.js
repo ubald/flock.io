@@ -9,13 +9,15 @@ export default class PlayerBird extends Bird {
     constructor( name, config ) {
         super( name, config );
         this._player = config.player;
-        __SERVER__ && this.addComponent( new FlightControls( 'control', { alpha: this.density, input: this._player.input } ) );
+        __SERVER__ && this.addComponent( new FlightControls( 'control', {
+            alpha: this.density,
+            input: this._player.input
+        } ) );
     }
 
     createMesh() {
+        this.material = this.material || new THREE.MeshLambertMaterial( { color: 0xEE1010 } );
         super.createMesh();
-        this.material      = new THREE.MeshLambertMaterial( { color: 0xEE1010 } );
-        this.mesh.material = this.material;
     }
 
 }

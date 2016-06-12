@@ -4,7 +4,7 @@ import InputBase from "./InputBase";
 
 export default class Input extends InputBase {
 
-    _controllers = [];
+    state = null;
 
     constructor( game ) {
         super( game );
@@ -12,24 +12,24 @@ export default class Input extends InputBase {
 
     update() {
         super.update();
-        
+
         // KEYBOARD
-        /*for ( const key in this._keys ) {
-         if ( this._keys[key] ) {
-         if ( !this._lastKeys[key] ) {
-         this._keyDownSubject.next( { key } );
-         }
-         this._keyPressSubject.next( { key } );
-         } else {
-         this._keyUpSubject.next( { key } );
-         delete this._keys[key];
-         }
-         }*/
+        for ( const key in this._keys ) {
+            if ( this._keys[key] ) {
+                if ( !this._lastKeys[key] ) {
+                    this._keyDownSubject.next( { key } );
+                }
+                this._keyPressSubject.next( { key } );
+            } else {
+                this._keyUpSubject.next( { key } );
+                delete this._keys[key];
+            }
+        }
 
         // CONTROLLER
         for ( var i in this._controllers ) {
             const controller = this._controllers[i];
-            let lastState  = this._lastControllerState[i];
+            let lastState    = this._lastControllerState[i];
 
             if ( !lastState ) {
                 lastState = this._lastControllerState[i] = {
@@ -66,7 +66,7 @@ export default class Input extends InputBase {
                 lastButtonState.pressed = button.pressed;
                 lastButtonState.value   = button.value;
             }
-            
+
             for ( var k = 0; k < controller.axes.length; k++ ) {
                 var axis     = controller.axes[k] || 0.0;
                 var lastAxis = lastState.axes[k] || 0.0;

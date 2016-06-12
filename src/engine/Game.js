@@ -1,23 +1,11 @@
 "use strict";
 
-import CANNON from "cannon";
-import Messages from "./network/Messages";
-
-/*if ( __SERVER__ ) {
- var Input = require( "./input/InputServer" ).default;
- } else */
-if ( __CLIENT__ ) {
-    var Input = require( "./input/InputClient" ).default;
-}
-
 export default class Game {
 
     initialized  = false;
     beforeUpdate = null;
     afterUpdate  = null;
-    playerClass  = null;
     players      = {};
-    state        = {};
 
     /**
      * Create a game
@@ -31,28 +19,13 @@ export default class Game {
         // Options
         this.options = options;
 
-        // Renderer
-        this.renderer     = options.renderer;
         this.beforeUpdate = options.beforeUpdate;
         this.afterUpdate  = options.afterUpdate;
 
         // Loop parameters
         this.fps        = 60.0;
         this.tickLength = 1e3 / this.fps;
-
-        if ( __CLIENT__ ) {
-            // Input
-            this._input = new Input( this );
-        }
     }
-
-    /**
-     * Input
-     * @returns {Input}
-     */
-    /*get input() {
-     return this._input;
-     }*/
 
     /**
      * Scene
@@ -78,22 +51,6 @@ export default class Game {
     }
 
     /**
-     * Game Server
-     * @returns {Server}
-     */
-    get server() {
-        return this._server;
-    }
-
-    /**
-     * Game Client
-     * @returns {Client}
-     */
-    get client() {
-        return this._client;
-    }
-
-    /**
      * Initialize the game
      */
     initialize() {
@@ -101,21 +58,7 @@ export default class Game {
             return;
         }
 
-        if ( __SERVER__ ) {
-            this._server = new (require( './network/Server' ).default)( {
-                game:        this,
-                port:        4000,
-                playerClass: this.playerClass
-            } );
-            this._server.listen();
-        } else if ( __CLIENT__ ) {
-            this._client = new (require( './network/Client' ).default)( {
-                game:        this,
-                port:        4000,
-                playerClass: this.playerClass
-            } );
-            this._client.connect();
-        }
+        this._init();
 
         if ( this._scene ) {
             this._scene.initialize( this );
@@ -134,6 +77,10 @@ export default class Game {
             this._intervalLoop = this._intervalLoop.bind( this );
             this._intervalLoop();
         }
+    }
+
+    _init() {
+        //
     }
 
     /**
@@ -167,7 +114,8 @@ export default class Game {
             this.loop( time );
         }
 
-        if ( Game._hrTime() - this.previousTick < this.tickLength - 16000 ) {
+        // if we are more than 16 milliseconds away from the next tick, use setTimeout
+        if ( Game._hrTime() - this.previousTick < this.tickLength - 16 ) {
             setTimeout( this._intervalLoop );
         } else {
             setImmediate( this._intervalLoop );
@@ -189,66 +137,9 @@ export default class Game {
 
             // Only render when we have an active scene
             if ( this._scene ) {
-
-                // Input
-                if ( __SERVER__ ) {
-                    Object.values( this.players ).forEach( player => player.update() )
-                } else if ( __CLIENT__ ) {
-                    this._input.update();
-                }
-
-                if ( __CLIENT__ ) {
-                    const bodies    = this._scene.physics.bodies;
-                    const bodyCount = this._scene.physics.numObjects();
-                    const DYNAMIC   = CANNON.Body.DYNAMIC;
-                    for ( let i = 0; i !== bodyCount; i++ ) {
-                        const bi = bodies[i];
-                        const s  = this.state[bi.__id];
-                        if ( bi.type & DYNAMIC && s ) { // Only for dynamic bodies
-                            bi.position.set( s[0] / 1000, s[1] / 1000, s[2] / 1000 );
-                            bi.quaternion.set( s[3] / 1000, s[4] / 1000, s[5] / 1000, s[6] / 1000 );
-                        }
-                    }
-                }
-
-                // Scene Update
+                this.preUpdate(dt);
                 this._scene.update( dt );
-
-                // Network
-                if ( __SERVER__ ) {
-                    const bodies    = this._scene.physics.bodies;
-                    const bodyCount = this._scene.physics.numObjects();
-                    const DYNAMIC   = CANNON.Body.DYNAMIC;
-                    let state       = {
-                        i: [],
-                        d:null
-                    };
-                    let values = [];
-                    //let state = {};
-                    for ( let i = 0; i !== bodyCount; i++ ) {
-                        const bi = bodies[i];
-                        if ( bi.type & DYNAMIC ) { // Only for dynamic bodies
-                            const position = bi.position.toArray().map( a => Math.round( a * 1000 ) );
-                            const quaternion = bi.quaternion.toArray().map( a => Math.round( a * 1000 ) );
-                            state.i.push(bi.__id);
-                            values = values.concat(position, quaternion);
-                            //state[bi.__id] = position.concat( quaternion );
-                        }
-                    }
-                    var buffer = new ArrayBuffer(values.length*2); //16bit
-                    var dv = new DataView(buffer, 0);
-                    for ( var i = 0; i<values.length; i++) {
-                        dv.setInt16( i*2, values[i] );
-                    }
-                    state.d = buffer;
-                    this._server.io.emit( Messages.STATE, state );
-                    //this._server.io.emit( Messages.STATE, state );
-
-                } else if ( __CLIENT__ ) {
-                    // Renderer
-                    this.renderer.render( this._scene );
-                }
-
+                this.postUpdate(dt);
             }
 
             if ( this.afterUpdate ) {
@@ -258,11 +149,20 @@ export default class Game {
         this.lastTime = time;
     }
 
+    preUpdate() {
+
+    }
+
+    postUpdate() {
+
+    }
+
     addPlayer( player ) {
         this.players[player.id] = player;
         if ( this._scene && this._scene.initialized ) {
             this._scene.addPlayer( player );
         }
+        player.initialize();
     }
 
     removePlayer( player ) {
@@ -270,5 +170,6 @@ export default class Game {
             this._scene.removePlayer( player );
         }
         delete this.players[player.id];
+        player.dispose();
     }
 }

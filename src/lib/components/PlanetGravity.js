@@ -49,7 +49,7 @@ export default class PlanetGravity extends Component {
             roll = 0.00;
         }
 
-        this.attitude.set( pitch * 0.25, roll * 0.05 /*Bank rotation*/, roll * 0.05 );
+        this.attitude.set( pitch * 0.25, 0.0, roll * 0.05 );
         this.entity.body.vectorToWorldFrame( this.attitude, this.attitude );
         this.entity.body.angularVelocity.vadd( this.attitude, this.entity.body.angularVelocity );
     }

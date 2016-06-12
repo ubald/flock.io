@@ -7,7 +7,6 @@ export default class InputBase {
     constructor( game ) {
         this._game = game;
 
-        this._deadZone = 0.1;
         this._controllers         = {};
         this._lastControllerState = {};
 

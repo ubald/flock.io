@@ -11,6 +11,8 @@ if ( __CLIENT__ ) {
  */
 export default class Entity extends Id {
 
+    static ID = 0;
+
     /**
      * Config
      * @type {{}}
@@ -25,6 +27,8 @@ export default class Entity extends Id {
      */
     constructor( name, config = {} ) {
         super( name );
+
+        
 
         // Config
         this._config = config;
@@ -156,7 +160,7 @@ export default class Entity extends Id {
             this._object3D = new THREE.Object3D();
             this._scene.stage.add( this._object3D );
         }
-        
+
         this._components.forEach( component => component.init() );
     }
 

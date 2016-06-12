@@ -1,45 +1,39 @@
 "use strict";
 
-import SocketIo from "socket.io";
-import Messages from "./Messages";
+import WebSocket, {Server as WebSocketServer} from "ws";
+import NetworkPlayer from "../player/NetworkPlayer";
 
 export default class Server {
 
-    constructor( { game, port, playerClass } ) {
+    constructor( { game, port } ) {
         this.game        = game;
         this.port        = port;
-        this.playerClass = playerClass;
     }
 
     listen() {
-        this.io = new SocketIo( this.port, { serveClient: false } );
-        this.io.on( 'connection', this._onConnection.bind( this ) );
+        this.ws = new WebSocketServer( { port: this.port } );
+        this.ws.on( 'connection', this._onConnection.bind( this ) );
+        this.ws.on( 'error', this._onError.bind( this ) );
     }
 
     _onConnection( socket ) {
-        console.log( 'Adding client', socket.id );
-
-        const player = new this.playerClass( { game: this.game, socket } );
-
-        socket.on( 'disconnect', this._onDisconnect.bind( this, player ) );
-
-        // Send current player to client
-        for ( var id in this.game.players ) {
-            socket.emit( Messages.PLAYER_ADDED, { id } );
-        }
-        // Send self to client
-        socket.broadcast.emit( Messages.PLAYER_ADDED, { id: player.id } );
-
-        // Save player
-        this.game.addPlayer( player );
+        this.game.addPlayer( new NetworkPlayer( { game: this.game, socket } ) );
     }
 
-    _onDisconnect( player ) {
-        console.log( 'Removing client', player.socket.id );
+    _onError( error ) {
+        console.error( error );
+    }
 
-        this.game.removePlayer( player );
-        player.dispose();
-
-        this.io.emit( Messages.PLAYER_REMOVED, { id: player.id } );
+    broadcast( message, options = {}, skip = null ) {
+        options = options || {};
+        this.ws.clients.forEach( client => {
+            if ( client.readyState == WebSocket.OPEN && ( !skip || skip != client ) ) {
+                if ( options.binary ) {
+                    client.send( message, options );
+                } else {
+                    client.send( JSON.stringify( message ), options );
+                }
+            }
+        } );
     }
 }

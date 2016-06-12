@@ -40,6 +40,7 @@
     "express": "^4.13.4",
     "lodash": "^4.13.1",
     "preprocess": "^3.1.0",
-    "socket.io": "^1.4.6"
+    "socket.io": "^1.4.6",
+    "ws": "^1.1.0"
   }
 }

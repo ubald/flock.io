@@ -10,9 +10,8 @@ export default class Hero extends PlayerBird {
     }
 
     createMesh() {
+        this.material = this.material || new THREE.MeshLambertMaterial( { color: 0x10EE10 } );
         super.createMesh();
-        this.material      = new THREE.MeshLambertMaterial( { color: 0x10EE10 } );
-        this.mesh.material = this.material;
     }
 
 }

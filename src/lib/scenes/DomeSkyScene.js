@@ -3,6 +3,7 @@
 import THREE from "three";
 import CANNON from "cannon";
 import Scene from "../../engine/Scene";
+import LocalPlayer from "../../engine/player/LocalPlayer";
 import Ground from "./domeSky/Ground";
 import Planet from "./domeSky/Planet";
 import Bird from "../entities/Bird";
@@ -32,13 +33,13 @@ export default class DomeSkyScene extends Scene {
         };
 
         // Ground
-        this.add( new Ground('ground') );
-        
+        this.add( new Ground( 'ground' ) );
+
         // Planet
-        this.add( new Planet('planet', { radius: this.radius}));
+        this.add( new Planet( 'planet', { radius: this.radius } ) );
 
         // Birds
-        for ( var i = 0; i < 250; i++ ) {
+        for ( var i = 0; i < 100; i++ ) {
             const bird = new Bird( 'bird' + i, {
                 planetGravity: this.planetGravity
             } );
@@ -54,7 +55,7 @@ export default class DomeSkyScene extends Scene {
         }
 
         if ( __CLIENT__ ) {
-            
+
             // Top Light
             var topPointLight = new THREE.PointLight( 0xffffff, 1, 100 );
             topPointLight.position.set( 0, this.radius + 5, 0 );
@@ -75,9 +76,9 @@ export default class DomeSkyScene extends Scene {
 
             // HERO
             /*this.hero = new Hero( 'hero', {
-                planetGravity: this.planetGravity
-            } );
-            this.add( this.hero );*/
+             planetGravity: this.planetGravity
+             } );
+             this.add( this.hero );*/
 
             // CAMERA RIG
             this.cameraNull = new THREE.Object3D();
@@ -100,13 +101,13 @@ export default class DomeSkyScene extends Scene {
      * @inheritdoc
      */
     addPlayer( player ) {
-        const clazz = player.hero ? Hero : PlayerBird;
+        const clazz  = ( player instanceof LocalPlayer ) ? Hero : PlayerBird;
         const entity = new clazz( `player-${player.id}`, {
             player:        player,
             planetGravity: this.planetGravity
         } );
         this.add( entity );
-        if ( player.hero ) {
+        if ( player instanceof LocalPlayer ) {
             this.hero = entity;
         }
     }
@@ -115,14 +116,14 @@ export default class DomeSkyScene extends Scene {
      * @inheritdoc
      */
     removePlayer( player ) {
-        const entity = this.get(`player-${player.id}`);
+        const entity = this.get( `player-${player.id}` );
         if ( entity ) {
             if ( player.hero ) {
                 this.hero = null;
             }
             this.remove( entity );
         } else {
-            console.warn(`Could not find player entity ${player.id} for removal`)
+            console.warn( `Could not find player entity ${player.id} for removal` )
         }
     }
 

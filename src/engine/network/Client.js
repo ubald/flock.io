@@ -1,16 +1,17 @@
 "use strict";
 
-import SocketIo from "socket.io-client";
 import Messages from "./Messages";
+import LocalPlayer from "../player/LocalPlayer";
+import RemotePlayer from "../player/RemotePlayer";
+import DataViewWrapper from "../serializers/DataViewWrapper";
 
 export default class Client {
 
     _id = null;
 
-    constructor( { game, port, playerClass } ) {
-        this.game        = game;
-        this.port        = port;
-        this.playerClass = playerClass;
+    constructor( { game, port } ) {
+        this.game = game;
+        this.port = port;
     }
 
     get id() {
@@ -22,26 +23,72 @@ export default class Client {
     }
 
     connect() {
-        this._socket = SocketIo.connect( `:${this.port}` );
-        this._socket.on( 'connect', this._onConnect.bind( this ) );
-        this._socket.on( Messages.SELF_ADDED, this._onSelfAdded.bind( this ) );
-        this._socket.on( Messages.PLAYER_ADDED, this._onPlayerAdded.bind( this ) );
-        this._socket.on( Messages.PLAYER_REMOVED, this._onPlayerRemoved.bind( this ) );
-        this._socket.on( Messages.STATE, this._onState.bind( this ) );
+        this.ws            = new WebSocket( `ws://${window.location.hostname}:${this.port}` );
+        this.ws.binaryType = "arraybuffer";
+        this.ws.onopen     = this._onConnect.bind( this );
+        this.ws.onerror    = this._onError.bind( this );
+        this.ws.onclose    = this._onClose.bind( this );
+        this.ws.onmessage  = this._onMessage.bind( this );
     }
 
-    _onConnect() {
+    send( message, options = {} ) {
 
+        if ( this.ws.readyState == WebSocket.OPEN ) {
+            if ( options.binary ) {
+                this.ws.send( message, options );
+            } else {
+                this.ws.send( JSON.stringify( message ), options );
+            }
+        }
+    }
+
+    _onConnect( event ) {
+        console.log( 'open', event );
+    }
+
+    _onError( event ) {
+        console.error( 'error', event );
+    }
+
+    _onClose( event ) {
+        console.log( 'close', event );
+    }
+
+    _onMessage( event ) {
+        //console.log('message', event);
+        const data = event.data;
+        if ( typeof(data) == "string" ) {
+            const message = JSON.parse( data );
+            switch ( message.m ) {
+                case Messages.SELF_ADDED:
+                    this._onSelfAdded( message );
+                    break;
+                case Messages.PLAYER_ADDED:
+                    this._onPlayerAdded( message );
+                    break;
+                case Messages.PLAYER_REMOVED:
+                    this._onPlayerRemoved( message );
+                    break;
+            }
+        } else {
+            const dv   = new DataViewWrapper( data );
+            const type = dv.readInt8( );
+            switch ( type ) {
+                case Messages.STATE:
+                    this.state = dv;
+                    break;
+            }
+        }
     }
 
     _onSelfAdded( { id } ) {
         this._id     = id;
-        const player = new this.playerClass( { id, hero: true, game: this.game, socket: this._socket } );
+        const player = new LocalPlayer( { id, game: this.game, socket: this.ws } );
         this.game.addPlayer( player );
     }
 
     _onPlayerAdded( { id } ) {
-        const player = new this.playerClass( { id, game: this.game, socket: this._socket } );
+        const player = new RemotePlayer( { id, game: this.game } );
         this.game.addPlayer( player );
     }
 
@@ -50,21 +97,6 @@ export default class Client {
         if ( player ) {
             this.game.removePlayer( player );
         }
-    }
-
-    _onState( data ) {
-        let state = {};
-        const bv  = new DataView( data.d );
-        let s     = 0;
-        for ( var i = 0; i < data.i.length; i++ ) {
-            const id  = data.i[i];
-            state[id] = [];
-            for ( var j = 0; j < 7; j++ ) {
-                state[id][j] = bv.getInt16( s );
-                s += 2;
-            }
-        }
-        this.game.state = state;
     }
 
 }

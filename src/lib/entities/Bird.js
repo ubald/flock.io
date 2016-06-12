@@ -18,10 +18,10 @@ export default class Bird extends Entity {
             angularDamping: 0.9,
             type:           CANNON.Body.DYNAMIC
         } );
-        
+
         this._body.position.set( 0, 10, 0 );
 
-        if (__SERVER__) {
+        if ( __SERVER__ ) {
             this.addComponent( new PlanetGravity(
                 'gravity',
                 _.extend( {
@@ -40,12 +40,12 @@ export default class Bird extends Entity {
                 Bird.geometry = geometry;
             }
 
-            const shape = new CANNON.Sphere( Bird.geometry.boundingSphere.radius );
+            const shape = new CANNON.Sphere( Bird.geometry.boundingSphere.radius * 0.5 );
             this._body.addShape( shape );
             this._body.mass = shape.volume() * this.density;
             this._body.updateMassProperties();
 
-            if (__CLIENT__) {
+            if ( __CLIENT__ ) {
                 this.createMesh();
             }
             //var normals = new THREE.VertexNormalsHelper( this.birdMesh, 0.2, 0x00ff00, 1 );
@@ -54,8 +54,7 @@ export default class Bird extends Entity {
     }
 
     createMesh() {
-        this.material = new THREE.MeshLambertMaterial( { color: 0xFFC107 } );
-        this.mesh     = new THREE.Mesh( Bird.geometry, this.material );
+        this.mesh = new THREE.Mesh( Bird.geometry, this.material || new THREE.MeshLambertMaterial( { color: 0xFFC107 } ) );
         this.addObject( this.mesh );
     }
 
