@@ -43,7 +43,7 @@ export default class BinaryStateSerializer {
     static serialize( game ) {
         const bodies    = game.scene.physics.bodies;
         const bodyCount = game.scene.physics.numObjects();
-        const DYNAMIC   = CANNON.Body.DYNAMIC;
+        const STATIC   = CANNON.Body.STATIC;
 
         const ids     = [];
         let idsLength = 0;
@@ -51,7 +51,7 @@ export default class BinaryStateSerializer {
 
         for ( let i = 0; i !== bodyCount; i++ ) {
             const bi = bodies[i];
-            if ( bi.type & DYNAMIC ) { // Only for dynamic bodies
+            if ( bi.type != STATIC ) { // Only for dynamic/kinematic bodies
                 const position   = bi.position.toArray().map( a => Math.round( a * 1000 ) );
                 const quaternion = bi.quaternion.toArray().map( a => Math.round( a * 1000 ) );
                 ids.push( bi.__id );
@@ -117,12 +117,12 @@ export default class BinaryStateSerializer {
 
         const bodies    = game.scene.physics.bodies;
         const bodyCount = game.scene.physics.numObjects();
-        const DYNAMIC   = CANNON.Body.DYNAMIC;
+        const STATIC   = CANNON.Body.STATIC;
 
         for ( let i = 0; i !== bodyCount; i++ ) {
             const bi = bodies[i];
             const s  = idData[bi.__id];
-            if ( bi.type & DYNAMIC && s ) { // Only for dynamic bodies
+            if ( bi.type != STATIC && s ) { // Only for dynamic/kinematic bodies
                 bi.position.set( s[0] / 1000, s[1] / 1000, s[2] / 1000 );
                 bi.quaternion.set( s[3] / 1000, s[4] / 1000, s[5] / 1000, s[6] / 1000 );
             }

@@ -2,7 +2,7 @@
 
 import THREE from "three";
 import "three/examples/js/controls/OrbitControls";
-import {PI_2} from "../engine/math/Math";
+import {PI_2, PI_180} from "../engine/math/Math";
 import Renderer from "../engine/Renderer";
 import DomeVertex from "./shaders/DomeVertex.glsl";
 import DomeFragment from "./shaders/DomeFragment.glsl";
@@ -38,7 +38,7 @@ export default class DomeRenderer extends Renderer {
 
         // Preview Camera - Monitor to preview what happens in the scene
         this.debugCamera            = new THREE.PerspectiveCamera( 90, 1, 0.01, 100000 );
-        this.debugCamera.position.z = 20;
+        this.debugCamera.position.x = 20;
         this.controls               = new THREE.OrbitControls( this.debugCamera, this._renderer.domElement );
 
         // Orthographic Camera - To capture the projected cube map
@@ -46,6 +46,7 @@ export default class DomeRenderer extends Renderer {
         this.domeCamera.position.x = 0;
         this.domeCamera.position.y = 0;
         this.domeCamera.position.z = 1024; // Totally arbitrary
+        //this.domeCamera.rotation.y = Math.PI; // Totally arbitrary
         this.domeScene.add( this.domeCamera );
 
         this.setup();
@@ -157,7 +158,7 @@ export default class DomeRenderer extends Renderer {
         this.cubeCamera.position.x = 0;
         this.cubeCamera.position.y = 0;
         this.cubeCamera.position.z = 0;
-        this.cubeCamera.rotation.x = -Math.PI / 2; // Had to rotate, I don't understand the mapping maths
+        //this.cubeCamera.rotation.x = -Math.PI / 2; // Had to rotate, I don't understand the mapping maths
 
         // Preview wireframe, just for debug
         if ( this._showGrid ) {
@@ -165,6 +166,7 @@ export default class DomeRenderer extends Renderer {
             this.wireframeMaterial        = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true } );
             this.wireframeMesh            = new THREE.Mesh( this.wireframeGeometry, this.wireframeMaterial );
             this.wireframeMesh.position.z = 10; // It just has to be above the rest
+
             this.domeScene.add( this.wireframeMesh );
         }
 
@@ -187,7 +189,7 @@ export default class DomeRenderer extends Renderer {
          * Not really helpful because you don't know if it past 180 degrees or not
          * @type {number}
          */
-        const collar_radius = Math.sin( ( this._domeAngle * ( Math.PI / 180 ) ) - PI_2 );//0.45;
+        const collar_radius = Math.sin( ( this._domeAngle * PI_180 ) - PI_2 );//0.45;
 
         /**
          * Some distance, don't know really what's going on here

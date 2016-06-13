@@ -1,4 +1,5 @@
 'use strict';
+
 import _ from "lodash";
 import THREE from "three";
 import CANNON from "cannon";
@@ -19,7 +20,7 @@ export default class Bird extends Entity {
             type:           CANNON.Body.DYNAMIC
         } );
 
-        this._body.position.set( 0, 10, 0 );
+        this._body.position.set( 0, 0, 10 );
 
         if ( __SERVER__ ) {
             this.addComponent( new PlanetGravity(
@@ -34,7 +35,7 @@ export default class Bird extends Entity {
     init() {
         super.init();
 
-        STLLoader.load( "assets/bird.stl", geometry => {
+        STLLoader.load( "assets/bird2.stl", geometry => {
             if ( !Bird.geometry ) {
                 geometry.scale( 0.25, 0.25, 0.25 );
                 Bird.geometry = geometry;

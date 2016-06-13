@@ -27,9 +27,7 @@ export default class Entity extends Id {
      */
     constructor( name, config = {} ) {
         super( name );
-
         
-
         // Config
         this._config = config;
 
@@ -138,7 +136,7 @@ export default class Entity extends Id {
      * @param {THREE.Object3D} object3D
      */
     addObject( object3D ) {
-        this.object3D.add( object3D );
+        this._object3D.add( object3D );
     }
 
     /**
@@ -146,7 +144,7 @@ export default class Entity extends Id {
      * @param {THREE.Object3D} object3D
      */
     removeObject( object3D ) {
-        this.object3D.remove( object3D );
+        this._object3D.remove( object3D );
     }
 
     init() {
@@ -184,7 +182,7 @@ export default class Entity extends Id {
      * Destroy an entity
      */
     dispose() {
-        if ( this.body ) {
+        if ( this._body ) {
             this._scene.physics.removeBody(this.body);
         }
         this._components.forEach( components => components.dispose() );

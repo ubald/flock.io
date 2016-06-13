@@ -6,6 +6,7 @@ import Scene from "../../engine/Scene";
 import LocalPlayer from "../../engine/player/LocalPlayer";
 import Ground from "./domeSky/Ground";
 import Planet from "./domeSky/Planet";
+import Pointer from "../entities/Pointer";
 import Bird from "../entities/Bird";
 import Hero from "../entities/Hero";
 import PlayerBird from "../entities/PlayerBird";
@@ -39,7 +40,7 @@ export default class DomeSkyScene extends Scene {
         this.add( new Planet( 'planet', { radius: this.radius } ) );
 
         // Birds
-        for ( var i = 0; i < 100; i++ ) {
+        /*for ( var i = 0; i < 100; i++ ) {
             const bird = new Bird( 'bird' + i, {
                 planetGravity: this.planetGravity
             } );
@@ -52,44 +53,36 @@ export default class DomeSkyScene extends Scene {
                 bird.addComponent( new Wander( 'wander' ) );
             }
             this.add( bird );
-        }
+        }*/
 
         if ( __CLIENT__ ) {
 
             // Top Light
             var topPointLight = new THREE.PointLight( 0xffffff, 1, 100 );
-            topPointLight.position.set( 0, this.radius + 5, 0 );
+            topPointLight.position.set( 0, 0, this.radius + 5 );
             this.stage.add( topPointLight );
             this.stage.add( new THREE.PointLightHelper( topPointLight, 1 ) );
 
             // Bottom Light
             var bottomPointLight = new THREE.PointLight( 0xffffff, 1, 100 );
-            bottomPointLight.position.set( 0, -5, 0 );
+            bottomPointLight.position.set( 0, 0, -5 );
             this.stage.add( bottomPointLight );
             this.stage.add( new THREE.PointLightHelper( bottomPointLight, 1 ) );
 
             var hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.6 );
             hemiLight.color.setHSL( 0.6, 1, 0.6 );
             hemiLight.groundColor.setHSL( 0.095, 1, 0.75 );
-            hemiLight.position.set( 0, 100, 0 );
+            hemiLight.position.set( 0, 0, 100 );
             this.stage.add( hemiLight );
-
-            // HERO
-            /*this.hero = new Hero( 'hero', {
-             planetGravity: this.planetGravity
-             } );
-             this.add( this.hero );*/
 
             // CAMERA RIG
             this.cameraNull = new THREE.Object3D();
-            //this.cameraNull.position.copy( this.hero.body.position );
             this.stage.add( this.cameraNull );
 
             this._camera            = new THREE.PerspectiveCamera( 90, 1, 0.01, 100000 );
-            this._camera.position.y = 0.5;
-            this._camera.position.z = -0.5;
+            this._camera.position.y = -0.5;
+            this._camera.position.z = 0.5;
             this._camera.rotation.x = 35 * Math.PI / 180;
-            this._camera.rotateY( Math.PI );
             this.cameraNull.add( this._camera );
 
             this.cameraHelper = new THREE.CameraHelper( this._camera );
@@ -101,29 +94,43 @@ export default class DomeSkyScene extends Scene {
      * @inheritdoc
      */
     addPlayer( player ) {
+        // Player Bird
         const clazz  = ( player instanceof LocalPlayer ) ? Hero : PlayerBird;
-        const entity = new clazz( `player-${player.id}`, {
+        const playerBird = new clazz( `player-${player.id}`, {
             player:        player,
             planetGravity: this.planetGravity
         } );
-        this.add( entity );
+        this.add( playerBird );
         if ( player instanceof LocalPlayer ) {
-            this.hero = entity;
+            this.hero = playerBird;
         }
+        // Player Pointer
+        const playerPointer = new Pointer( `pointer-${player.id}`, {
+            player:        player
+        } );
+        this.add( playerPointer );
     }
 
     /**
      * @inheritdoc
      */
     removePlayer( player ) {
-        const entity = this.get( `player-${player.id}` );
-        if ( entity ) {
+        // Player Bird
+        const playerBird = this.get( `player-${player.id}` );
+        if ( playerBird ) {
             if ( player.hero ) {
                 this.hero = null;
             }
-            this.remove( entity );
+            this.remove( playerBird );
         } else {
             console.warn( `Could not find player entity ${player.id} for removal` )
+        }
+        // Player Pointer
+        const playerPointer = this.get( `pointer-${player.id}` );
+        if ( playerPointer ) {
+            this.remove( playerPointer );
+        } else {
+            console.warn( `Could not find pointer entity ${player.id} for removal` )
         }
     }
 

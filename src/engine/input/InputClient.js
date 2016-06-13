@@ -2,6 +2,7 @@
 
 import InputBase from "./InputBase";
 import PS3 from "./mappers/PS3";
+import FULLTILT from "fulltilt";
 
 const mappers = [PS3];
 
@@ -10,14 +11,15 @@ export default class Input extends InputBase {
     state = {
         controllers: {},
         keys:        {},
-        orientation: {}
+        orientation: null
     };
 
     constructor( game ) {
         super( game );
 
         // CONTROLLER
-        this._haveEvents = 'ongamepadconnected' in window;
+        this._controllers = {};
+        this._haveEvents  = 'ongamepadconnected' in window;
 
         // GAMEPADS
         this._detectControllers();
@@ -30,10 +32,10 @@ export default class Input extends InputBase {
         window.addEventListener( 'keyup', this._onKeyUp.bind( this ), false );
 
         // Mobile Orientation
-        window.addEventListener( 'deviceorientation', this._onDeviceOrientation.bind( this ), false );
-        window.addEventListener( 'devicemotion', this._onDeviceMotion.bind( this ), false );
+        this._fullTilt = new FULLTILT.getDeviceOrientation( { 'type': 'world' } )
+            .then( controller => this._orientationController = controller )
+            .catch( message => console.error( message ) );
 
-        //this.madgwick = new AHRS({ sampleInterval: 20, algorithm: 'Madgwick' });
     }
 
     _detectControllers() {
@@ -91,21 +93,12 @@ export default class Input extends InputBase {
         delete this.state.keys[e.keyCode];
     }
 
-    _onDeviceOrientation( e ) {
-        this.state.orientation = { x:-e.beta, y:-e.gamma, z:e.alpha };
-    }
-
-    _onDeviceMotion( e ) {
-        this._motion = e.acceleration;
-    }
-
     update() {
         super.update();
 
-
-        //this.madgwick.update(this._motion.x, this._motion.y, this._motion.z, this._orientation.x, this._orientation.y, this._orientation.z, 0,0,0);//compass.x, compass.y, compass.z);
-        //const v = this.madgwick.toVector();
-        //console.log(v.angle, v.x, v.y, v.z);
+        if ( this._orientationController ) {
+            this.state.orientation = this._orientationController.getFixedFrameQuaternion();
+        }
 
         // CONTROLLER
         if ( this._controllers && this._controllers[0] ) {

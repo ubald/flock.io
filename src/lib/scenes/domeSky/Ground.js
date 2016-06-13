@@ -10,8 +10,7 @@ export default class Ground extends Entity {
         super( name, config );
 
         this._body = new CANNON.Body( { mass: 0, shape: new CANNON.Plane() } );
-        this._body.quaternion.setFromAxisAngle( new CANNON.Vec3( 1, 0, 0 ), -Math.PI / 2 );
-        this._body.position.set( 0, -5, 0 );
+        this._body.position.set( 0, 0, -5 );
     }
 
     init() {

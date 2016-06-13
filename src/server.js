@@ -26,6 +26,13 @@ app.get( '/', function ( req, res ) {
     res.send( preprocess.preprocess( require( './index.html' ) ) );
 } );
 
+app.get( '/test', function ( req, res ) {
+    res.set( {
+        'Cache-Control': 'no-cache'
+    } );
+    res.send( preprocess.preprocess( require( './test.html' ) ) );
+} );
+
 /**
  * Public Stuff
  */

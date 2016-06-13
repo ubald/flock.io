@@ -13,7 +13,7 @@ export default class Input extends InputBase {
     update() {
         super.update();
 
-        // KEYBOARD
+        /*// KEYBOARD
         for ( const key in this._keys ) {
             if ( this._keys[key] ) {
                 if ( !this._lastKeys[key] ) {
@@ -87,7 +87,7 @@ export default class Input extends InputBase {
             }
 
             this._lastControllerState[i] = lastState
-        }
+        }*/
 
     }
 }

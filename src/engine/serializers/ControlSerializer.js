@@ -34,7 +34,7 @@ export default class ControlSerializer {
             /* CONTROLLER COUNT (8bit) */ 1 +
             /* CONTROLLER ID + BUTTON COUNT + AXIS COUNT (8bit) */ controllerCount * 3 +
             /* DATA LENGTH */ length +
-            /* ORIENTATION */ 3 * 4;
+            /* ORIENTATION QUATERNION (16bit) */ 1 + ( controls.orientation ? 4 * 2 : 0 );
 
         const buffer = new ArrayBuffer( messageLength );
         const dv     = new DataViewWrapper( buffer );
@@ -66,9 +66,13 @@ export default class ControlSerializer {
         } );
 
         // Orientation
-        dv.writeFloat32(controls.orientation.x);
-        dv.writeFloat32(controls.orientation.y);
-        dv.writeFloat32(controls.orientation.z);
+        dv.writeUint8( controls.orientation ? 1 : 0 );
+        if ( controls.orientation ) {
+            dv.writeInt16( Math.round( controls.orientation.w * 1000 ) );
+            dv.writeInt16( Math.round( controls.orientation.x * 1000 ) );
+            dv.writeInt16( Math.round( controls.orientation.y * 1000 ) );
+            dv.writeInt16( Math.round( controls.orientation.z * 1000 ) );
+        }
 
         return buffer;
     }
@@ -77,7 +81,7 @@ export default class ControlSerializer {
         const state = {
             keys:        {},
             controllers: {},
-            orientation: {}
+            orientation: null
         };
 
         // Keys
@@ -113,10 +117,16 @@ export default class ControlSerializer {
         }
 
         // Orientation
-        state.orientation.x = buffer.readFloat32();
-        state.orientation.y = buffer.readFloat32();
-        state.orientation.z = buffer.readFloat32();
-        
+        const hasOrientation = buffer.readUint8();
+        if ( hasOrientation ) {
+            state.orientation = {
+                w: buffer.readInt16() / 1000,
+                x: buffer.readInt16() / 1000,
+                y: buffer.readInt16() / 1000,
+                z: buffer.readInt16() / 1000
+            }
+        }
+
         return state;
     }
 

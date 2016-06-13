@@ -14,8 +14,8 @@ export default class PlanetGravity extends Component {
     }
 
     force       = new THREE.Vector3();
-    front       = new THREE.Vector3( 0, 0, 1 );
-    side        = new THREE.Vector3( -1, 0, 0 );
+    front       = new THREE.Vector3( 0, 1, 0 );
+    side        = new THREE.Vector3( 1, 0, 0 );
     localCenter = new THREE.Vector3();
     attitude    = new CANNON.Vec3();
 
@@ -49,7 +49,7 @@ export default class PlanetGravity extends Component {
             roll = 0.00;
         }
 
-        this.attitude.set( pitch * 0.25, 0.0, roll * 0.05 );
+        this.attitude.set( -pitch * 0.25, roll * 0.05, 0.00 );
         this.entity.body.vectorToWorldFrame( this.attitude, this.attitude );
         this.entity.body.angularVelocity.vadd( this.attitude, this.entity.body.angularVelocity );
     }

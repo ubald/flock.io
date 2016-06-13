@@ -7,12 +7,13 @@ var rootPath = path.dirname( __dirname );
 
 module.exports = {
     devtool: 'source-map',
-    entry:   [
-        path.join( rootPath, 'src/client.js' )
-    ],
+    entry:   {
+        client: [path.join( rootPath, 'src/client.js' )],
+        test:   [path.join( rootPath, 'src/test.js' )]
+    },
     output:  {
         path:       path.join( rootPath, 'build' ),
-        filename:   'client.js',
+        filename:   '[name].js',
         publicPath: '/'
     },
     resolve: {
@@ -23,7 +24,8 @@ module.exports = {
         ],
         alias:              {
             //'cannon': 'cannon/src'
-            'dat.gui': 'vendor/dat.gui.js'
+            'dat.gui':  'vendor/dat.gui.js',
+            'fulltilt': 'vendor/fulltilt.js'
         }
     },
     plugins: [
@@ -43,6 +45,7 @@ module.exports = {
             // Shims
             { test: /three\/examples/, loader: 'imports?THREE=three' },
             { test: /vendor\/dat\.gui/, loader: 'exports?dat' },
+            { test: /fulltilt/, loader: 'exports?window.FULLTILT' },
             // Loaders
             {
                 test:    /\.jsx?$/,

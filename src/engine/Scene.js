@@ -122,12 +122,11 @@ export default class Scene extends Id {
      * Destroy the scene
      */
     dispose() {
+        this._entities.forEach( entity => entity.dispose() );
+        this._physics = null;
         if ( __CLIENT__ ) {
             this._stage = null;
         }
-
-        this._entities.forEach( entity => entity.dispose() );
-        this._physics = null;
     }
 
     /**

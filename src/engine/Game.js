@@ -1,5 +1,7 @@
 "use strict";
 
+import THREE from "three";
+
 export default class Game {
 
     initialized  = false;
@@ -25,6 +27,9 @@ export default class Game {
         // Loop parameters
         this.fps        = 60.0;
         this.tickLength = 1e3 / this.fps;
+
+        // Z-Up please
+        THREE.Object3D.DefaultUp = new THREE.Vector3( 0, 0, 1 );
     }
 
     /**
