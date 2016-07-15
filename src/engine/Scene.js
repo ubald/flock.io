@@ -111,7 +111,7 @@ export default class Scene extends Id {
     }
 
     _postInit() {
-        if ( __CLIENT__ ) {
+        if ( __CLIENT__ && this._game.renderer ) {
             this._game.renderer.camera = this._camera;
         }
 

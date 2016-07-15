@@ -12,13 +12,13 @@ import DomeFragment from "./shaders/DomeFragment.glsl";
  */
 export default class DomeRenderer extends Renderer {
 
+    _north          = 0;
     _showDebugViews = true;
     _mainView       = 'scene';
 
     /**
      * Create a Dome Renderer
      *
-     * @param {float} domeAngle - Dome angle in degrees (ex: 180 or 210)
      * @param {float} domeAngle - Dome angle in degrees (ex: 180 or 210)
      * @param {int} gridResolution - Resolution of the grid onto which the cube map is projected (grid size)
      * @param {int} mapResolution - Cube map resolution (pixels per face)
@@ -50,6 +50,15 @@ export default class DomeRenderer extends Renderer {
         this.domeScene.add( this.domeCamera );
 
         this.setup();
+    }
+
+    get north() {
+        return this._north;
+    }
+
+    set north( north ) {
+        this._north = north;
+        this.faceNorth();
     }
 
     get domeAngle() {
@@ -111,6 +120,15 @@ export default class DomeRenderer extends Renderer {
         this.updateSizes();
     }
 
+    set camera( camera ) {
+        super.camera = camera;
+        this.updateCameras();
+    }
+
+    faceNorth() {
+        this.cubeCamera.rotation.z = this._north * PI_180;
+    }
+
     _mainCamera   = null;
     _debugCameraA = null;
     _debugCameraB = null;
@@ -158,6 +176,7 @@ export default class DomeRenderer extends Renderer {
         this.cubeCamera.position.x = 0;
         this.cubeCamera.position.y = 0;
         this.cubeCamera.position.z = 0;
+        this.faceNorth();
         //this.cubeCamera.rotation.x = -Math.PI / 2; // Had to rotate, I don't understand the mapping maths
 
         // Preview wireframe, just for debug

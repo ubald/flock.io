@@ -48,7 +48,6 @@ export default class Renderer {
 
     set camera(camera) {
         this._camera = camera;
-        this.updateCameras();
     }
     
     get width() {

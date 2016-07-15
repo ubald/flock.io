@@ -4,7 +4,6 @@ import _ from "lodash";
 import Messages from "../network/Messages";
 import Player from "./Player";
 import Input from "../input/InputServer";
-import BufferWrapper from "../serializers/BufferWrapper";
 import ControlSerializer from "../serializers/ControlSerializer";
 
 export default class NetworkPlayer extends Player {
@@ -12,14 +11,25 @@ export default class NetworkPlayer extends Player {
     static ID = 0;
 
     /**
-     * Socket
-     * @type {WebSocket}
+     * Game
+     * @type {GameServer}
      * @protected
      */
-    _socket = null;
+    _game = null;
 
-    get socket() {
-        return this._socket;
+    get game() {
+        return this._game;
+    }
+
+    /**
+     * Socket
+     * @type {ServerClient}
+     * @protected
+     */
+    _client = null;
+
+    get client() {
+        return this._client;
     }
 
     /**
@@ -40,10 +50,8 @@ export default class NetworkPlayer extends Player {
     constructor( options ) {
         super( _.defaults( { id: NetworkPlayer.ID++ }, options ) );
         this._input  = new Input( this );
-        this._socket = options.socket;
-        this._socket.on( 'close', this._onClose.bind( this ) );
-        this._socket.on( 'error', this._onError.bind( this ) );
-        this._socket.on( 'message', this._onMessage.bind( this ) );
+        this._client = options.client;
+        this._game = options.game;
     }
 
     /**
@@ -72,12 +80,6 @@ export default class NetworkPlayer extends Player {
         this._input.update();
     }
 
-    dispose() {
-        super.dispose();
-
-        this._socket.close();
-    }
-
     /**
      * Send a message on the socket
      *
@@ -86,58 +88,23 @@ export default class NetworkPlayer extends Player {
      */
     send( message, options = {} ) {
         if ( options.binary ) {
-            this._socket.send( message, options );
+            this._client.socket.send( message, options );
         } else {
-            this._socket.send( JSON.stringify( message ), options );
+            this._client.socket.send( JSON.stringify( message ), options );
         }
-    }
-
-    /**
-     * Socket close handler
-     *
-     * @protected
-     */
-    _onClose() {
-        this._game.removePlayer( this );
-    }
-
-    /**
-     * Socket error handler
-     *
-     * @param error
-     * @protected
-     */
-    _onError( error ) {
-        console.error( error );
     }
 
     /**
      * Socket message handler
      *
-     * @param data
-     * @protected
+     * @param {String} type
+     * @param {BufferWrapper} buffer
      */
-    _onMessage( data ) {
-        //console.log('message', event);
-        if ( typeof(data) == "string" ) {
-            try {
-                var message = JSON.parse( data );
-            } catch (e) {
-                console.warn(e);
-                return;
-            }
-            switch ( message.m ) {
-                default:
-                    break;
-            }
-        } else {
-            const buffer   = new BufferWrapper( data );
-            const type = buffer.readInt8( );
-            switch ( type ) {
-                case Messages.CONTROLS:
-                    this._input.state = ControlSerializer.deserialize(buffer);
-                    break;
-            }
+    onMessage( type, buffer ) {
+        switch ( type ) {
+            case Messages.CONTROLS:
+                this._input.state = ControlSerializer.deserialize( buffer );
+                break;
         }
     }
 }

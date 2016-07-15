@@ -9,9 +9,10 @@ export default class Client {
 
     _id = null;
 
-    constructor( { game, port } ) {
-        this.game = game;
-        this.port = port;
+    constructor( { game, port = 4000, spectator = false } ) {
+        this.game      = game;
+        this.port      = port;
+        this.spectator = spectator;
     }
 
     get id() {
@@ -32,7 +33,6 @@ export default class Client {
     }
 
     send( message, options = {} ) {
-
         if ( this.ws.readyState == WebSocket.OPEN ) {
             if ( options.binary ) {
                 this.ws.send( message, options );
@@ -72,7 +72,7 @@ export default class Client {
             }
         } else {
             const dv   = new DataViewWrapper( data );
-            const type = dv.readInt8( );
+            const type = dv.readInt8();
             switch ( type ) {
                 case Messages.STATE:
                     this.state = dv;

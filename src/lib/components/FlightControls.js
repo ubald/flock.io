@@ -3,7 +3,7 @@
 import CANNON from "cannon";
 import Component from "../../engine/Component";
 import {Axis, Button} from "../../engine/input/mappers/PS3";
-import {KeyCodes} from "../../engine/input/Keyboard";
+import {KeyCodes} from "../../engine/input/helpers/Keyboard";
 
 export default class FlightControls extends Component {
 

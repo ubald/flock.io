@@ -20,14 +20,16 @@ export default class GameClient extends Game {
      */
     client = null;
 
-    constructor( options = {} ) {
+    constructor( options = { spectator: false } ) {
         super( options );
 
         // Renderer
         this.renderer = options.renderer;
 
-        // Input
-        this.input = new Input( this );
+        if ( !options.spectator ) {
+            // Input
+            this.input = new Input( this );
+        }
     }
 
     _init() {
@@ -35,8 +37,9 @@ export default class GameClient extends Game {
 
         // Client
         this.client = new Client( {
-            game:        this,
-            port:        4000
+            game:      this,
+            port:      4000,
+            spectator: this.options.spectator
         } );
 
         this.client.connect();
@@ -46,12 +49,14 @@ export default class GameClient extends Game {
         super.preUpdate();
 
         // Input
-        this.input.update();
-        const controls = ControlSerializer.serialize( this.input.state );
-        this.client.send( controls, { binary: true } );
+        if ( this.input ) {
+            this.input.update();
+            const controls = ControlSerializer.serialize( this.input.state );
+            this.client.send( controls, { binary: true } );
+        }
 
         // State
-        if (this.client.state) {
+        if ( this.client.state ) {
             StateSerializer.deserialize( this.client.state, this );
             this.client.state = null; // Reset so that we don't parse the same state twice or more
         }
@@ -60,7 +65,9 @@ export default class GameClient extends Game {
     postUpdate() {
         super.postUpdate();
 
-        this.renderer.render( this._scene );
+        if ( this.renderer ) {
+            this.renderer.render( this._scene );
+        }
     }
 
 }

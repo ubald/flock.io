@@ -9,8 +9,8 @@ if ( __SERVER__ ) {
 }
 
 export default class FlockIo extends Game {
-    constructor() {
-        super();
+    constructor(options) {
+        super(options);
         this._scene      = new DomeSkyScene();
     }
 }

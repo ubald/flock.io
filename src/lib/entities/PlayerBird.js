@@ -1,7 +1,7 @@
 'use strict';
 
 import THREE from "three";
-import GPUParticleSystem from "../../client/GPUParticlesSystem";
+//import GPUParticleSystem from "../../client/GPUParticlesSystem";
 import Bird from "./Bird";
 import FlightControls from "../components/FlightControls";
 import LeashControl from "../components/LeashControl";

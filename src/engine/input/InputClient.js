@@ -35,7 +35,6 @@ export default class Input extends InputBase {
         this._fullTilt = new FULLTILT.getDeviceOrientation( { 'type': 'world' } )
             .then( controller => this._orientationController = controller )
             .catch( message => console.error( message ) );
-
     }
 
     _detectControllers() {
